@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Events Portal</title>
+  <!-- html2canvas: turns the generated flyer into a downloadable image (needs internet) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- =====================================================
+       CSS : how the page LOOKS
+       ===================================================== -->
+  <style>
+    :root {
+      --dark: #0f172a;   --dark2: #1e293b;
+      --blue: #2563eb;   --blue-d: #1d4ed8;
+      --green: #16a34a;  --red: #dc2626;
+      --bg: #f1f5f9;     --border: #e2e8f0;
+      --muted: #64748b;  --ph: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", Arial, sans-serif; background: var(--bg); color: #0f172a; font-size: 14px; }
+
+    /* ---------- Buttons & inputs ---------- */
+    button { font-family: inherit; font-size: 13px; cursor: pointer; border: none; border-radius: 6px; padding: 7px 14px; }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-d); }
+    .btn-light { background: #fff; border: 1px solid var(--border); color: #0f172a; }
+    .btn-light:hover { background: #f8fafc; }
+    .btn-danger { background: #fee2e2; color: var(--red); border: 1px solid #fecaca; }
+    .btn-grey { background: #e2e8f0; color: #0f172a; }
+    .btn-green { background: var(--green); color: #fff; width: 100%; padding: 10px; font-weight: 600; letter-spacing: .5px; }
+    .btn-green:disabled { background: #94a3b8; cursor: default; }
+    .link { color: var(--blue); background: none; padding: 0; }
+
+    input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font: inherit; background: #fff; }
+    label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+    .hidden { display: none !important; }
+
+    /* ---------- Login screen ---------- */
+    .login-wrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 20px; background: linear-gradient(135deg, #dbeafe, #e9d5ff); }
+    .login-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    .login-card { background: #fff; padding: 24px; border-radius: 12px; width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 8px; }
+
+    /* ---------- Faculty layout (sidebar + main) ---------- */
+    .faculty { display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; background: var(--dark); padding: 20px 12px; flex-shrink: 0; }
+    .logo { font-size: 18px; font-weight: 700; color: #fff; margin: 0 8px 30px; display: flex; align-items: center; gap: 8px; }
+    .logo-icon { height: 34px; }
+    .sidebar a { display: block; padding: 9px 12px; border-radius: 6px; color: #cbd5e1; text-decoration: none; margin-bottom: 4px; cursor: pointer; }
+    .sidebar a:hover { background: var(--dark2); }
+    .sidebar a.active { background: var(--dark2); color: #fff; border-left: 3px solid var(--blue); }
+    .main { flex: 1; min-width: 0; }
+    .topbar { background: #fff; border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .topbar input { max-width: 280px; background: #f8fafc; }
+    .page { padding: 24px; }
+    .page h1 { font-size: 22px; margin-bottom: 16px; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; color: var(--muted); }
+    .stat b { display: block; font-size: 24px; color: var(--blue); }
+
+    .tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .tabs span { padding: 8px 2px; cursor: pointer; color: var(--muted); }
+    .tabs span.active { color: var(--blue); border-bottom: 2px solid var(--blue); font-weight: 600; }
+
+    /* ---------- Event cards ---------- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    .ev-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+    .ev-card h4 { margin: 10px 0 6px; }
+    .ev-card p { margin: 3px 0; }
+    .media { height: 110px; border-radius: 8px; background: var(--ph); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; color: #475569; }
+    .media img { width: 100%; height: 100%; object-fit: cover; }
+    .media b { font-size: 30px; }
+    .actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .empty { color: var(--muted); padding: 20px; background: #fff; border-radius: 10px; border: 1px dashed #cbd5e1; }
+
+    /* ---------- Forms & tables ---------- */
+    .form-box { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 900px; }
+    .form-box h3 { margin: 22px 0 10px; font-size: 16px; }
+    .form-box h3:first-child { margin-top: 0; }
+    .row { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 12px; }
+    .upload { border: 1px dashed #94a3b8; background: #f8fafc; border-radius: 6px; padding: 8px; }
+    .upload input { border: none; background: none; padding: 0; }
+    .preview { max-height: 80px; margin-top: 6px; border-radius: 6px; }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; align-items: center; }
+
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #f1f5f9; font-size: 13px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; background: #e2e8f0; }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.blue  { background: #dbeafe; color: #1e40af; }
+    .badge.amber { background: #fef3c7; color: #92400e; }
+
+    /* ---------- Student portal ---------- */
+    .s-top { background: #fff; border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .s-top .logo { color: #0f172a; margin: 0; }
+    .spacer { flex: 1; }
+    .s-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 24px; max-width: 1200px; margin: auto; }
+    .s-event { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    .s-event .inner { display: flex; gap: 14px; margin-bottom: 12px; }
+    .s-event .media { width: 120px; height: 110px; flex-shrink: 0; }
+    .s-event p { margin: 3px 0; }
+    .side-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+    .side-card h3 { margin-bottom: 10px; }
+    .my-item { border-bottom: 1px solid var(--border); padding: 10px 0; }
+    .od { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; }
+    .dot.ok { background: var(--green); }
+
+    /* ---------- Popup (modal) ---------- */
+    .modal { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10; }
+    .modal-box { background: #fff; border-radius: 12px; padding: 24px; max-width: 720px; width: 100%; max-height: 90vh; overflow: auto; }
+    .report h2 { margin-bottom: 6px; }
+    .report h3 { margin: 16px 0 8px; }
+    .filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .filters label { margin: 0; }
+    .filters select { width: auto; }
+    .gen-btn { margin-top: 6px; background: #f5edfc; color: #5b1a8e; border: 1px solid #e9d5ff; font-weight: 600; }
+    .gen-btn:hover { background: #ede0fb; }
+
+    /* ---------- Printing: only print the report ---------- */
+    #printArea { display: none; }
+    @media print {
+      body > * { display: none !important; }
+      #printArea { display: block !important; padding: 20px; }
+      #printArea, #printArea * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    /* ---------- Phones / small screens ---------- */
+    @media (max-width: 800px) {
+      .faculty { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .s-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- =====================================================
+     HTML : the STRUCTURE
+     ===================================================== -->
+
+<!-- ============ 1. LOGIN SCREEN ============ -->
+<div id="loginScreen" class="login-wrap">
+  <img data-logo="wide" alt="Rajalakshmi Engineering College" style="width:90%;max-width:380px">
+  <h1 style="color:#5b1a8e">Campus Events Portal</h1>
+  <div class="login-cards">
+    <div class="login-card">
+      <h3>Faculty Login</h3>
+      <label>Name</label>
+      <input id="facName" placeholder="e.g. Dr. Rendhara">
+      <label>Password</label>
+      <input id="facPass" type="password" placeholder="admin123">
+      <button class="btn-primary" onclick="facultyLogin()">Login as Faculty</button>
+    </div>
+    <div class="login-card">
+      <h3>Student Login</h3>
+      <label>Name</label>
+      <input id="stuName" placeholder="e.g. Alex Johnson">
+      <label>Roll Number</label>
+      <input id="stuRoll" placeholder="e.g. 201">
+      <label>Department</label>
+      <input id="stuDept" placeholder="e.g. CSE">
+      <label>Section</label>
+      <input id="stuSec" placeholder="e.g. A">
+      <label>Year</label>
+      <select id="stuYear">
+        <option>Year 1</option><option selected>Year 2</option><option>Year 3</option><option>Year 4</option>
+      </select>
+      <button class="btn-green" onclick="studentLogin()">Login as Student</button>
+    </div>
+  </div>
+  <p style="color:#475569">Demo: faculty password is <b>admin123</b> · try student roll <b>201</b> (Alex Johnson)</p>
+</div>
+
+
+<!-- ============ 2. FACULTY PORTAL ============ -->
+<div id="facultyScreen" class="faculty hidden">
+  <aside class="sidebar">
+    <div class="logo"><img data-logo="icon" class="logo-icon" alt=""> REC Events</div>
+    <a data-page="dashboard" onclick="showPage('dashboard')">🏠 Dashboard</a>
+    <a data-page="events"    onclick="showPage('events')">📅 Events</a>
+    <a data-page="create"    onclick="newEvent()">➕ Create Event</a>
+    <a data-page="students"  onclick="showPage('students')">👥 Students</a>
+    <a data-page="reports"   onclick="showPage('reports')">📄 Reports</a>
+    <a data-page="profile"   onclick="showPage('profile')">👤 Profile</a>
+    <a onclick="logout()">🚪 Logout</a>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <input id="search" placeholder="🔍 Search events..." oninput="showPage('dashboard')">
+      <span id="facWelcome"></span>
+    </div>
+
+    <!-- Dashboard page -->
+    <section id="page-dashboard" class="page">
+      <h1>Events Dashboard</h1>
+      <div class="stats" id="stats"></div>
+      <div class="tabs" id="tabs">
+        <span data-tab="upcoming"  onclick="setTab('upcoming')">Upcoming</span>
+        <span data-tab="ongoing"   onclick="setTab('ongoing')">Ongoing</span>
+        <span data-tab="completed" onclick="setTab('completed')">Completed</span>
+      </div>
+      <div class="grid" id="eventGrid"></div>
+    </section>
+
+    <!-- All events page -->
+    <section id="page-events" class="page hidden">
+      <h1>All Events</h1>
+      <table>
+        <thead><tr><th>Title</th><th>Type</th><th>Date</th><th>Venue</th><th>Batch</th><th>Status</th><th></th></tr></thead>
+        <tbody id="eventsTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Create / Edit event page -->
+    <section id="page-create" class="page hidden">
+      <h1 id="formTitle">Create New Event</h1>
+      <div class="form-box">
+
+        <h3>Academic Details</h3>
+        <div class="row">
+          <div><label>Academic Year</label>
+            <select id="fYear"><option>2026-27</option><option>2025-26</option><option>2027-28</option></select></div>
+          <div><label>Semester</label>
+            <select id="fSem"><option>Odd</option><option>Even</option></select></div>
+          <div><label>Event Type</label>
+            <select id="fType" onchange="toggleOtherType()">
+              <option>Workshop</option><option>Seminar</option><option>Guest Lecture</option>
+              <option>FDP</option><option>Hackathon</option><option>Others</option>
+            </select>
+            <input id="fTypeOther" class="hidden" style="margin-top:6px" placeholder="Type the event name, e.g. Symposium"></div>
+        </div>
+
+        <h3>Event Info</h3>
+        <div class="row">
+          <div><label>Title *</label><input id="fTitle" placeholder="e.g. IoT Workshop"></div>
+          <div><label>Coordinator</label><input id="fCoord"></div>
+        </div>
+        <div class="row">
+          <div><label>Organizing Department *</label><input id="fOrgDept" list="deptList" placeholder="e.g. CSE"></div>
+          <div><label>In Association With</label><input id="fAssoc" placeholder="e.g. IEEE Student Branch, CSI, a company"></div>
+        </div>
+        <datalist id="deptList">
+          <option>CSE</option><option>IT</option><option>ECE</option><option>EEE</option><option>MECH</option>
+          <option>CIVIL</option><option>AIDS</option><option>AIML</option><option>CSBS</option><option>MBA</option>
+        </datalist>
+        <div class="row">
+          <div><label>Poster Upload (image, under 1 MB)</label>
+            <div class="upload"><input type="file" id="fPoster" accept="image/*"><img id="posterPreview" class="preview hidden"></div></div>
+          <div><label>Flyer Upload</label>
+            <div class="upload"><input type="file" id="fFlyer"><small id="flyerName"></small></div>
+            <button class="gen-btn" onclick="openDetails('flyer')">✨ Generate Flyer</button></div>
+          <div><label>Permission Letter Upload</label>
+            <div class="upload"><input type="file" id="fLetter"><small id="letterName"></small></div>
+            <button class="gen-btn" onclick="openDetails('letter')">✨ Generate Permission Letter</button></div>
+        </div>
+        <div><label>Description</label><textarea id="fDesc" rows="2"></textarea></div>
+
+        <h3>Schedule &amp; Venue</h3>
+        <div class="row">
+          <div><label>Start Date *</label><input type="date" id="fStart"></div>
+          <div><label>End Date</label><input type="date" id="fEnd"></div>
+          <div><label>Start Time</label><input type="time" id="fStartTime"></div>
+          <div><label>End Time</label><input type="time" id="fEndTime"></div>
+        </div>
+        <div class="row">
+          <div><label>Duration</label>
+            <select id="fDuration"><option>Half Day</option><option>Full Day</option><option>2 Days</option><option>3 Days</option><option>1 Week</option></select></div>
+          <div><label>Venue *</label><input id="fVenue" placeholder="e.g. Auditorium 101"></div>
+        </div>
+
+        <h3>Chief Guest</h3>
+        <div class="row">
+          <div><label>Name</label><input id="fGuest"></div>
+          <div><label>Designation</label><input id="fGuestDesig"></div>
+        </div>
+        <div class="row">
+          <div><label>Institution</label><input id="fGuestInst"></div>
+          <div><label>Profile Photo</label>
+            <div class="upload"><input type="file" id="fGuestPhoto" accept="image/*"><img id="guestPreview" class="preview hidden"></div></div>
+        </div>
+
+        <h3>Participants Selection</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;flex-wrap:wrap">
+          <div class="filters">
+            <label>Batch (event is for):</label>
+            <select id="fBatch" onchange="renderParticipants()">
+              <option>All</option><option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option>
+            </select>
+            <label>Department:</label>
+            <select id="pDept" onchange="renderParticipants()"></select>
+            <label>Section:</label>
+            <select id="pSec" onchange="renderParticipants()"></select>
+            <label>Sort by:</label>
+            <select id="pSort" onchange="renderParticipants()">
+              <option value="dept">Department</option><option value="section">Section</option>
+              <option value="roll">Roll No.</option><option value="name">Name</option>
+            </select>
+          </div>
+          <button class="link" onclick="selectAll()">Select All</button>
+        </div>
+        <p id="pCount" style="color:var(--muted);margin-bottom:6px"></p>
+        <table>
+          <thead><tr><th>OD</th><th>Student</th><th>Roll No.</th><th>Department</th><th>Section</th><th>Pre-Registered</th><th>Status</th></tr></thead>
+          <tbody id="participantsBody"></tbody>
+        </table>
+
+        <h3>Actions</h3>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="saveEvent()">💾 Save Event</button>
+          <button class="btn-grey" onclick="sendFeedback()">Send Feedback</button>
+          <button class="btn-primary" onclick="generateReportFromForm()">Generate Report 🖨️</button>
+          <button class="btn-light" onclick="showPage('dashboard')">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Students page -->
+    <section id="page-students" class="page hidden">
+      <h1>Students</h1>
+      <div class="form-box" style="margin-bottom:16px">
+        <h3>Add Student</h3>
+        <div class="row">
+          <div><label>Name</label><input id="newStuName"></div>
+          <div><label>Roll No.</label><input id="newStuRoll"></div>
+          <div><label>Department</label><input id="newStuDept" placeholder="e.g. CSE"></div>
+          <div><label>Section</label><input id="newStuSec" placeholder="e.g. A"></div>
+          <div><label>Year</label>
+            <select id="newStuYear"><option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option></select></div>
+        </div>
+        <button class="btn-primary" onclick="addStudent()">Add Student</button>
+      </div>
+
+      <!-- Bulk add: paste many students at once, or upload a CSV file -->
+      <div class="form-box" style="margin-bottom:16px">
+        <h3>Bulk Add Students</h3>
+        <p style="color:var(--muted);margin-bottom:8px">
+          One student per line: <b>Name, Roll No, Department, Section, Year</b> (Year is optional).
+          Paste straight from Excel, or download the sample, fill it in Excel, save as CSV and upload it.
+        </p>
+        <textarea id="bulkText" rows="6" placeholder="Ravi Kumar, 203, CSE, A, 2&#10;Meena S, 204, CSE, B, 2&#10;Anand P, 305, ECE, A, 3"></textarea>
+        <div class="row" style="margin-top:10px">
+          <div><label>Default year (if a line has no year)</label>
+            <select id="bulkYear"><option>Year 1</option><option selected>Year 2</option><option>Year 3</option><option>Year 4</option></select></div>
+          <div><label>Or upload a CSV file</label>
+            <div class="upload"><input type="file" id="bulkFile" accept=".csv,.txt"></div></div>
+        </div>
+        <div class="form-actions" style="margin-top:6px">
+          <button class="btn-primary" onclick="bulkAddStudents()">Add All Students</button>
+          <button class="btn-light" onclick="downloadSample()">Download sample CSV</button>
+        </div>
+        <div id="bulkResult" style="margin-top:10px"></div>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="display:inline">Filter: </label>
+        <select id="deptFilter" style="width:auto" onchange="renderStudents()"></select>
+        <select id="stuFilter" style="width:auto" onchange="renderStudents()">
+          <option>All</option><option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option>
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Roll No.</th><th>Department</th><th>Section</th><th>Year</th><th>Events Registered</th><th></th></tr></thead>
+        <tbody id="studentsTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Reports page -->
+    <section id="page-reports" class="page hidden">
+      <h1>Reports</h1>
+      <table>
+        <thead><tr><th>Event</th><th>Date</th><th>Status</th><th>Registered</th><th>OD</th><th>Feedback</th><th></th></tr></thead>
+        <tbody id="reportsTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Profile page -->
+    <section id="page-profile" class="page hidden">
+      <h1>Profile</h1>
+      <div class="form-box" style="max-width:420px">
+        <label>Display Name</label>
+        <input id="profName">
+        <div class="form-actions"><button class="btn-primary" onclick="saveProfile()">Save</button></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+
+<!-- ============ 3. STUDENT PORTAL ============ -->
+<div id="studentScreen" class="hidden">
+  <div class="s-top">
+    <div class="logo"><img data-logo="icon" class="logo-icon" alt=""> REC Events</div>
+    <span id="stuWelcome"></span>
+    <span class="spacer"></span>
+    <button class="btn-light" onclick="showNotifications()">🔔 Notifications <span id="notifCount" class="badge blue"></span></button>
+    <button class="btn-light" onclick="logout()">👤 Logout</button>
+  </div>
+
+  <div class="s-layout">
+    <div>
+      <h2 style="margin-bottom:14px">Upcoming Department Events</h2>
+      <div id="studentEvents"></div>
+    </div>
+    <div>
+      <div class="side-card">
+        <h3>My Events</h3>
+        <div class="tabs">
+          <span data-mytab="registered" onclick="setMyTab('registered')">Registered</span>
+          <span data-mytab="completed"  onclick="setMyTab('completed')">Completed</span>
+        </div>
+        <div id="myEvents"></div>
+      </div>
+      <div class="side-card">
+        <h3>OD Status</h3>
+        <div id="odStatus"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup for "View Details" -->
+<div id="modal" class="modal hidden" onclick="if (event.target === this) closeModal()">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- Hidden area used only when printing a report -->
+<div id="printArea"></div>
+
+
+<!-- =====================================================
+     JavaScript : makes everything WORK
+     ===================================================== -->
+<script>
+  // ---------- Small helper functions ----------
+  const $ = id => document.getElementById(id);
+
+  // ---------- College details (change here if needed) ----------
+  const COLLEGE = "Rajalakshmi Engineering College";
+  const LOGO_WIDE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAD1CAMAAAD3Y7RKAAAAwFBMVEVoGZ9sHZmxbGRWBWH8xS37sxn6viz/qlV9Afv6viz7wCz9yChvHKL//1z/AAD7wSzgoUH/fwDAfVgAAH89ALh/fwBVVaq/vz+ZAJmhGeWqAFX/f38AAABpGpr8wituG6N/AH/4vS5pGplpGplVAKppGpdpGpkAAP9pGplpGplpGpnamkX/AP9+AL5yJJM+AH7prDlwG6hoIpb6vixeHpvKiFH//wD9vTmsZ2eLQYCEOYWSSXubUnS3cmCqAKpgD6Egj6l5AAAAQHRSTlMH9/8EHxegAwJbYuORAgGa/wL/AgQCAwQFBAMCAP79/gP+jnIDFNABTy6v/wEE/wT/Cg3OCf8BCP///////wP/ZEfWBAAAOExJREFUeJztnYl62ziyqCUv3U7ck2TSfeaehTIpiYsoy5Kt2I5jO/b7v9Ul9ipsBBfJG+ucryeWQBAEfxWAQqFqdLYbOT39+sfXz5+Of0ZUbn/+/Hc0yCCGjKY7IpDL9LTi8PiI3OrLz+Pbl37cQV6bjHbE3fSMkC3pPv36ierCfx1/eeknHuRVyUgA07tIEgWHp1+PiCb8OajBQZTsSAMCqs+AJqwYrO75r2E6OIgQBuD0vG+5nE4hhwxC8j+nnysG/xwQHITJiKJxPulb1uvx/cPB75uKREHhmdCFRA3++V8v/eSDvArZFYBE4kom6/HD3Q2jUM0Hvx5XA/EwFxxktwAKDp/jyf3jzaXQgwzBalH850s//CAvL3sAkFFYQXj3jatBqgo/H0e3gxL88LIvAIk8T+4PpgrB08/VOPzSzz/IC8s+AawkXh984wiy1cigBD+47BnACsHJ47nSgp+i6Pilu2CQl5S9A0gRvJS26Wox8vOl+2CQF5QXAJAgeDcVSvD0KPpzGIY/rrwIgNV6ZP39TLgrVGuRYWPkw8oLAVhpwV+XYnuuGoYHk+BHlRcDsBqHDwSBp8NEcA+SpMlFUv1/mhQv3RQgLwdgNQ4/XHKLzOlxYwLTxJTNxUWa1FwHiyd1hdkFG3HByvdlkqTey8PuVqD2mTckktruWIDLLDfC/ZIYRbzNtH6JX4D12eHDuK59SQAn8fpGKMHmBDol6EV/LKF4ZOViTmRRbsmfr0QP9gDg+j5uj+CdIPBTE4PgKhrNrFL1bqT/3IEUUQZL/1VGdbCeRIu/nMUPwZdERsblCbx8UdXml6D2gUefq/uUqiX6jQhq5Sxn3iHEQWSynNNuCmum9mVitML57CUqIa5doYfsQwN+u1m3RnD8MJUEhuvA6hlEb+oyyWcl7FskabRAhZeuglIuoqUqPtd4SKIcVVca1SXRXH09q2rzCypOr7AAeK0efWJ/sDm6UdWmRU4248Hvvuqm+TaStXubmUQzS4uutRdgPvuF9jDiWvzyegBwfHc6PWhNYHx/2ZxA8gzOCuPJ0uwN1ZewbH5dd6cLcIUOoN4KA1D2ZuXXIQAuESe5bZi8ztX34rNNBaC6Dj3+JiqXsfl64jifH4py3mZqXwoAc1yd+VtZVT9PWxHcbX1owPuqjpt168vX3+Q8MNQa4wNwQhbYi2p4tMkId9vERaoUH4D4rVMeugFYRFfak9jGYBuA8D6TSRYpcJ+ixcShHeJcVN8DgLmp/EvtdjsDcEJ02OW4/UzwvCmBNQDSh7WQlbr6xC0+AFNNn5I3r1XXDMBUI9qmU10AgmYuwUWYTL2XJrz+7gCav2XjzrsDML6hxzAfnlvXIAj8GYXtytUCSJ52Y1x2YfRJXqz8d/IBWM2DtJsuugG40YmuWDLXLXYAl9ZmGkibLX6qa2YYgJYJ8nJvAN6d0ZXEQ2cdePozzD2rHkDSIYYOTLRZycQ+xkHxAGjo04m5qGk4B9RnCHg05WIDMIJvWz2TMQwawsr2AWCO7TrmrXcI4ANXYI+dCfwjbCESAGDVt4WhjozXYR3joHgA1Fc0RLYaL40ANIkmGsr4GVkALIAyhiNwkhi/OGv1fQzB2m/ZHPt3OAdcC1NKex24vmQOWmHmwBAAqxehLUQs8yHrGAfFA2CxMt6uwUsjAG3ts8wkLADCnxZogzYAS+MNePqn+mYGAmj8PJd7BPCSe7ZM79vXMRUEBixEHABq1gZ9WpwafTKxjnFQ3ADahjdjUdMQQFNfGYtLB4CStGooXMkKC1hhnM8WZbmYL3O5LO5vFUwbs4IXGW9ohwCyAZRUdNnaGhPfT9lM8ihgGoifocyYlIsZtDjoK+HCRq1tjIPiA9BcX1ZvH1/eBEDLOyMPZ6hoC4BgPQ4eSPuJzMVmxbZk/aSep5chGI3Bdm2+awCr/960rmP8GD4NxM8ArMkl0iHXSLuBASmeiyJ1hhg3gEqfVqpFltEWNU0AhGbFuf2eVGyLkJNcfrRRM0AIAanoIq2E+g2UVdvj/Cm1lGwNIGqqOQLvBcDqfw5aG2PGB8GDMH6GLOHeFekIKxGs3eCiIZPdk5ubmFCcAAJ9Gs/K2Fak7s1qcgLeWZZLuOHARsUEEKxeoEaHU46q6IX8NaZkd24Cds/6ARCsfmxzpF0CeKMAnI7bV8M5rh+E8TOApecITrv1RcMTeKtQZ/nGYCeASJ9GssiyNYBfANFL+FvRVaANQKmMoSEI7oXpS4RNVIJP+hmCQVMTi/1xLxqw0yDMFiJkEK5TgU4AowR0DKYBzIiqrli4dJYmTgATxDDQXUhjNQAQE+1pnwFgUqjeyKAzGlimGzbyNAIN7QdA0FTbem8/AFb/aG+LeeaD8Oc6At0APuE9KdXHsB+rt6G0jbmBC8U9B1RG43yLqnZZw2oAxESrH4th3DYBlFdqSyoI4Hylr49AyZ4AlD94+3pv13ZAAeC39hWRTT2yIVI3CHs0IOytHF6TIDWF/vAQ6AIwRfrUyUuTOWCqcLmK/lZ/bLVyOoBKtUu7nuimHP4YPZPdnoZgadOyjcC7BPAeBpqedtkQkYOwP2ZHKIDoR36lPq9ehktnaeICEOvTBOyhIcNiOIAJgnhrtavor54CeBFlufgzQ9th2K64iEZOi2dPAMqutFpcd7gV93g2hQB2qG18J4yB3pOaoQAiFNS0ala9YPi67a5bVFwAwgl+WfHsWNQ0AVARPa/aB1uruUAAAJNNGskVs76e0jBYuN3wOwIoF3d8DIYjMJiS79QbBqnADl4JdDpZuw5xA4iAgUMweBv0hwoqGHk2QxwAJmgSWSQuXsIB/BvQUlYjKahf+31oGnAhX/9C27bTjcGzzHVgBjezOCmgjIoaAHP1/RXtSqtFs3cA73+Jf8EpIFsItweQOTacnR1/8c0CfRoQ2L7AfAxNi6tR8hDx6DbEOAGcQ+Lg+JnjUTAQQPhE+YggDXlE1EAAy8UStE6rXt8sjCfzqyg6sTys1kxd6jQgtEKS3wA0Cy2Ma/sC8FzoOTpsIgCn7d2jhTr1q0AngGkC+hwqozRayI/JQKER5LyTA0Cd3yLJrbwEA6jrULAm1g0xaPYVg6sMtwXTJW9CDsxExnFP3MwsG0HJslkNgBk2QxbRVnVZuSMAxwenwvFAOLL0swyhDv7EGu1TgS4Ak0PoIgWXF/oLRTrLY4m2Awi6mK06XLwEA/ikzRD0HwwQ6/ozXhbmU+hnBki5yXKxNSaDXr9pdLkVQHA16QzohFPuCsC1nOmJHbSexmClAj0LYX0rbiRPR6OOBLpoVUAVRd7VyK6zNLEDCI3GFI8n/QPLm/XPAYF3NWlOEY3AA6L2WdefeWSr3LIjS08jZdq5wY4AXuGdQOUaUTVrV0PwzdnZHa16/Kjz18kpZsJUYI17Pn4G9Xk2Ax9DH100HaKGkif3GAfFDiBUeLRbEzzFXNnerA9AaFbME40dzVBk1YDkJKB5BoHskVjIqiaDWQTddTsCmEmTAPFAAker4JZTrwDGB0LNjX9NDQCrD9r7BUprtO+UJn6GuZAl6m2X2Y4tTRKHzgoCMPqPUp9sCVMosww/Z9EIQINorcXQvmwHMJ7Y1lInFdg2tMhxJHQwvSOAcAyG+/HljgBk9uLxuNJ/Fv6qT+46jMETthD+cRSqAcGpdCTAJAz1yZy/YKQTV00APIHXshkoJki+2lAAgXe1PCek62w/gLR5T0bFT5qHmioNVWZnAOEYvAUj8GhHADJj3eWv8fczC38dJ4Gi+s/uWWCQSz44lYTK8xkffucuFWgFEGsn+hmceOdq8ywQQI02UiOyGyHl5gLQPpVIo8yyKzFhKvNJ3r8jgCdgDE7Ezgy16OwCwPjgTObemlr462rZ5vV/dVtiQk7FLQtlwIV7k8IBEOosd4gOB4C6PsVnygMd7SCAiuicaztoOUeGIieAdosmWZk5jqZLAjsDiMZguX6vOmInAArD81QNvzBBZudVCL0BXYa48nkFnAvOMzDLTi0DJDqxc+XaDLEBmFj0qQ3KJgCasCEok4AhmEi2MnVgQqIB2REUASS6A6g0+AKMwMnhLgCMv1vWvRxD8WcXU7RahnxxLUPqIyPk2LSyVbsHYrjVhmWHCrQDCNBVDiCmEgsFEA63UouhYRk+jQdAx3KqqjCb55YAMcJ9EAMY6wK+cgCoDPFVCTACb3cB4C/LkDu9uTu4O1ckdloGi/24P5yGmLrYMPEyg2d5Uuu7hAtX52aIDUA4OMrB236PMACfsDJe8Y83uX5nK4Bo5b+wLESq/qqWG9liaahB4YiBAMyXupgOBTqAI6D2VD+U0U4WIee6AqyuX9MfyoPYE+nmjzCh0WZ8psAaAHPi+AGKw+levrJ/2mAIhvoKkHFl+TQMQDwdFRU+WT/FbgDkLCAcXp0WJTo0j8yRuKQEdtwLzpC6Vo66CRosegIwNgzP1AufDrnPYlcObMaN2wzGfJR3roO9AFYvIVqtYHGk65JDERw2AXrHtRliARDrOhJ3mVWXWvRi4BxwBHTdaCQqvEAjvXwiwyMaGVqck4mChO0kIzHqK7aDjJuZ0tNzUkZpCIBmVBFSNt2BBjR3ftmEr/rPevxgAHj5vcUpJT4Gf3XZoms0YIadjlDcgBJ+oz42XEncACLNCcsCXrbmzNANoDZ6K0EzQ/lIEMBVscJHAaub2MZg3hGJtlkkbAId/QHptooZp6Qkx+/6BjC27PzeVVru4XJ6Tjg85xYaDiAp3uaYHFtoO23R2sF0Imrt7z0bOZnNgahX6Rq6LAAWYFs5h7WpVwtWEgEAuts3AddKxWZoQHQUkCxJ3UIsA9gyTQ++dwfQEtcmz7CpoScNqCtAMt9jwJxWtcS/EYDUUaFV9FQG8pFjEoifgZkSoLk1K7BTHvjOsbxzbYaYAGIvO3t10jcqCEAUStTRPhDL1XIss0DH37yhHooRbj8t3h1AS6w6UrR3AE0FWMk93T2jQ3F8BwGM79uaZJ7v+CTQPgabB9PRhK4iBWzMF0bf2B7MsRliAzDAZpY3WITUx1AjouZ2JoB2RFyin52+6AVAYwzmjjF9a8BvFhvgr0rV8VokgGQVHI/ZEaO75+DqpfzyTgIt/oAFOFQW56OVKlwXpJFdYgto6QDQvrWFhYd0CQMwgGjAlQ1AMFvM/4Pj9Nks07lGRQ8AGr1MRuDeARQO89oc8Hk9OZieXRLb37kEcB2vefjxy8DaobBJ4Gn0JRRAHAgFmsOMuKNW4Tt0ujkGhbcgDudBoQmBzboewJMQooFx2xodyxqfUnypyQY+U18A6vGt2ay1dwBvbABSwNa/qpE2lkbqex7u6qytUfCcWgIdk0ALgOgjvKYwLQQ2KeW2FL6TNr2yHnk1RBx3DwAQeVd722e8egDgXNPT8ouyNA4EJ8VMa1Qfc0AtYjabXPYN4NjuevBdjrHfuAKcrp+lo1Yr3xg+2XSELbe55D+hDlBTppOgKRZ7b0WUHaITE0UBsSZ9+hSkT8UWXQCAQTMEyJUFQPiM8JhpkWZ51RUbXSWimDE9AfikPceV/nA9APh8ZypARpjIVCMjVR7AfbkWyxAK4NS1CrEBiOby4C0EbrTTMFRV2XEJMy0dootLcpZiG6RP+fmwAABtFjRbhfKJrDGitzoPoO4FngnijuptFYw1Obcb9a0BzSWIQOyAfj/+rQpA55gWY7DXFG09lIRXB2A71h8nGV5B+5ocn42S1LDx0htZ7F1WkX7XAYuQwPYJrmwAalNVuQ9TsraUBMGUzG+LZBSZ/dQHgPgcPG9EzwDe2/kDSk4uUqCfYCtTIF1Bn/1hDxntABCaF2Yy/HHIomHCxjja1/zsIhVotKXzukB9NeFDkPbyLPGoDwOJVlzZ0zSgFy0cJLhlAD5RhBxU47yonSmEAohnx1f8h9EngM+/XQBKW8va7qHfYh28pv4IP4IXIUTQaiMTywDQBXmpC+jbSmfxRCIkk1qp7/OzWRgyGs+N6oDfiDG2VSttXZY4d0mlqnSxHMm1AagZRlmHpMBDbLKcL66ukmRbzo1n6glA5FS2jP63fwBdIzCswnCVYV+32I5jCbzsy2A7gEZIWqZhUAoXXaD6yVTMIr4JgZVdiUIgTFBsYC46L15HOwpQgpfZRvvU5cKV2zoHTHRzkbllQ6rI9Wfa9gegFv1k0z+A9y78KGPUA9C6U3LW6qQ6S7/0M7JFKXIBiEZb3i1o11icIBZpltMR0lkjz4JFD6hAXv8m0QRq21S3TppV5lqblW8Nb1+CvmVDqwNA2LAV9bEqzDDN+t+zXvKEZOYciO9I9wqgHS7JGJ3nqXUydtH/3XgzhHtkNdGA2BTFVGDq36hPsc669vFCDIUnhg0XvyrMS1IP4AWaIRg2Y1sKLiuA6AwT3VcMMlhmyd/9Aajeilyy9wugxQoNAPxOZ0+P8rjI2Rlw0W9uCeQL6iPrKsQJIDQw0P04LYufmdIRvv+L1M0LVRb6a9arg/EXeASQWg3oI1rXuG4AtdVRNQEuVo7jcOgJzDMh7QFUDwMCBfY5BBuOMAhAWgffqyOzt2/fpsIU2CZqaizcEWyWaFdsGOxXQnoBRg2y5vOF86QycvIS51epvuGp5+UycA8A0FBcWFJtkpq4AVzhnaBVVXTjX7Grg6u9AShKik96BdC6DaIAZCvdew7cA/FPvZObcc1PyXEAP1mdop3BiZAlJi+SQw0wc2ce6yzXsBXnGRvQHVlRJS94wC/qAcQXmO0zAbUDiO9NvMKJ8dmZK3hCgyMI/4veAMzE3VOzUV0BNB0RsK2PMcYCu9yw5x6v1dZcwB3w7R49DlkuALUd8TLaQgByPdpyZA7RifUMbbwcsc5LwZrFcgx8pfNSDyCKp7ky2ocszOy9wjMhuCicAS/JfPfEeSCzutvCHhmhA4BiDFaqHAT56gygvg9H8FMLDQHgL1nd+HmyjoVdsLkdphZAZc0ACZEoT9LKsVyNiIKTf1qPbS9ilcWPrDOMBPdxLA45VQMisKLYTl9Qowq4H7NsO4QGqwblbZ58F7AC5jV7DR4d33y0hLXPsxVpITFmGqvf6ttrPTaMaoYO4MzSxmvbC+D1KCJJ98batejlxQ00IFoET4UGlOsMOgTH1DP1V/XA9we/15O1DF7Z+JhmHYBLZc1FMWBKaOjNYLmxzVe4GjVyVIIkEVpCZibLRcbj6VXdOYa3NaVaxYASI7JDr/42ZDxDd7cTDR+IehmOwKOjstUcdb7kXy6Xy9miKKJVyg5kol/BZKkFaIMPNtYTLcNnUl/CVlwpAEv2WCtL88W1K3ht3gBAuAiu/nXzsF7fHyiXl3NJKUHxofqM6EQxcewXwFBJ/akwrUJYyxbsTS6X8wXzq2wlq16KtC7NhOYDIYkcGZvLGX+k5j2zE2mwCEHZaKa/6KA6HsuDmNTSwuK2TbgZ+S6WmVz7HYI9Urg71vGN8XGq5fy1v6vQ2jpLkxpT7siTpGn6JAb0VWJYn1zh8rtLETVrcSsASWLg8ZoM9nKWJzaDzzmKCMDeFyG7lhXJfkgOOhAfkhe4f+9S0I2Vgv3jVT1SSwB/k/PmD49klvcIZ3kURzEET8UQ3MoMc3DmPZs+yPuQlkNwRdv6nM3y1uzkEbRDkwQODzcHY7EI6WCIttsBB3k30gZAquPiu9Mp239j4SSpzyndwOWjMRmguXtWm624ZwFgbfLgQd6yNADwBgN4QGZ55zFdHYsauDb8zXFThujmJzPHzCffdTR9kHcibeyAbE1BD8ARN6tvcpHxzAdc4QD9KLfiWkRru+HH4rxJ4wZ569JqJ4QNuI/n3+4mdPNNHPrQBtz7M7kV3Jw/PuL7kjUM8g6kwRD8CwBILojp/49v6KKYFBiL2NFMA8pAbtUHjUdgHiLwh/1g+iDvRhoAuJ4CAg/4h3SZyxScOJUuZnyxOkLSYgRe80NJwwj8vqWJPyDYixOZQNY3yuHeiE55Lv5ulYyT3scZIXCQdyJNPKIfIYDMAfqB2GKYlVksUuS2h/SEOfvlq9Z7s5fZCBlkf9JEA6Ix+DcDkEzU2JRvLHm7QVPAdllr6Pg9HcyA716aAAgmdcLWp5bAYpE8lTM+ESirXcoGb3CiQd6NNDoXrFSgnANOxYFMyZvIE3cvl8AtFCCfUJ4eOeKzDfJepBGAsTp0KXY7zs9EjHJuA5xy3vixSj5ZbCxiDTKMwO9cGkZIFfvBAsBq5cGNMMLt5Z6Z/OJ7YDFsLnxF40vZOsi7kIYAqpUtU2zVKkQch2P6T8RpE9FRW2Yt5Mm67KeCB3lH0jRI+b3wPxVL20tuhVnTBIMPfMvjnvqhdsiaWZMqaZD3Io3zhDxMkWoj00Lmbv8N1MO9Ys6+t+WPBYL7OijAdy/NU3URHTgFxpVLZmd+PjhTidJvWJFW618idIPPGR+VSeETvZC3BtcdkpSEL0rT5CI1z0tar294u6BHaPaglutDmxFaHEuSXmxoJzmOztRJ81RdMXGFnkoPq/jx9I4boiWAzCZ9ft+WP7HYOe5tBG5xOA6Gijb+7P12u5Ak2Vh/OC5ZNb7DCa7/pAWDbRJWk5wMZ9K8F5+fM9+DO/FZTA+E3LWmTxhhfty6+SuyK7dkGQ+ll/JS1jRIF1mGCkNhZxkX8xnJVioOMmp1jIzrRY2HkUV48ass1T+xiwg+GPSgifkdeBBrqy/wJ9ZuiKKt6EHLyVTaIaXspJLcsvEB1lYAxuu7y1N5zfqcj8Y3p/zox3o6PVi38MASIt3x3Qmrt/nEHSw8FyllFnEu/tZ7hoQckF9qsZsLElBgnk88R7lpEIAc3AzWaDkCT8IL8OIydiP/xP4ILB7lKsr8DzpjIWtKsxA5ArwoI5x3wmy1+iQ3D8aTUBu8uPElGRJGM9BJE3qE3xLdwSutACSJWR+/i0lgfP/A/3VzesAWJA/3bTIUKrmsGYFpdAfP9SI8qYiME0/KQusYlQLJiEVxYolnEdPg5eAdJPD6RKsx3+qDkQrDpgD0Rk+LJ9vgB7VneuBhHSJHqyWAqtWpCWCuWq3HS2ARJPAd8/lhQyXYEsCJtVviu+bHL23VsLN1P9y+gHXpinQALXFhVGxmHcCNI6JPTPIdrCyvcqY0oChqaNzGALJQSmEPCkMA6QXiHMYE8wFIPnrSW+0CMDVj6LByFj3qldYA2h933QuAN9wTxrkGbgygmcveCWCq5TNF1R6CqCceAG35sl4GQBaGLYnMVpsATibZypXSRgPw0Bn4jdzOnbHYlH4B7EfGLLKlxwrdHMBJfoXDUbgA/McbU295WKyMV2kBsNK4+C28HIATmGzYD6AxTrgATH3JKmxx6/oB0B1oDExEbR82M8c8H3ArtNsRoQWAMOWzB8BNzbtcPqUiGKNXA+pD1ksCCJ69RgOarbYC6OWvIYFNIqQ+/Gorjc6E8P3mo0AArT8EE0CVjdAH4Al6lSy1wQROtWWAvBoASfxvvPz0AGj/LesAWkstdQChMlAfqgzufgDzDK2e7ADquSdoH6HsIzVJs9sBGB+cnrWVJj6pPKTgHz4jNHwvS4v8NSewYQDjHPWKFUAc5j4m6Wqus6ycw8jTc5HZwA+gpnG9AOa2Z5iNgh8UAqi+g0jkV6siAECz1RYAcSzgyZLm9MkWMzhztgVD7g4gTb3QRhrFJuL7yPbo5BYA/9tZStOAeJFnBTBNQEDcyUKNzAvQuyySc60GnKDloA9AS34a24OaaXGEKABh1OhsYcZnrwNQQ8cGII6Gnqu2Zyq6sQjoHyBtI6Q20n9NNCDPB/bj1nceE76XbDPaaJImRpYuKlswKtoATNEyghhV01VRrEhcs60aL/MkCMA4fwoG0PYIqf6gpfNBIYDiG7JNkYFGj4I0oLYOsQGIUk/NDkkIO9JJZLtcmQ8slv+3AuCa3cR/GgkB6NzD1AFE44sFwFWhQpxX6124Nt6IFJPE1nqhvUqHBkQvoUYDbiK7IACdWsWuAYsLmIiz5Nk76zQgsldZAExB9jBSB+BsFGUiOWK+ENaCOnltAPJAwD9uvVHZ2gFIMufK/rIACJP75Rn+CSerLQ0nns8zUXkdgFXT1PbLCwCIsqDIrIR1AJLVEwi5bQAIMuuQjtNMW+R+bPslVF7ZHFDkgvAtgaPWAMItMtsQDCY3pc4ETRlDe9ZYT7oAhJlEXgRACBAzTAYACMcJE0CYOSe/OtG6nnYBSQ1b7GAV/Px9H6tgGmqrWgL7DyO11YBgVDQBhDt3lowJ1ddlpDZWQzQgWDq+FIBqozdsDshupFptAqh27szETlEympcWFxyPNLADPhz8bikHd4EAiqwOxx5HLP29NAEQvEUTQJiIMNN9F+hNYc+GADjJ5XD2UgDKHmDJXkMArFZZTgCLaKSKOdYZdu9dlzRKWF27EeKQ59CtEHrOnSjAmri8rQFUizwDQJCIUN81ET2LTWQBAMItiJcAEJrsaDKPIA2o7FUGgKBCmwIkl+zHHWtHwgbg06N/1XhCt9eAclQ0ANyA0mX9HCYIQDWcvTyA+trdDWAF60ps92gAwtJZL47frwlAsc6uDwjTFMA4V/aIERsVDQBB34rc5D7xARgvhXuo1LgvNQTLJuX1huilfBGq1cYqOFdP3TJ9D5ZXBCCLZlS/Aok0AIsTx4kcAOBS2SN4xxkArmDfuoBQ4gVwDgcqvnPnA7D4x3iClfGglVp2PKhHA8p7LGvNMPF8brYaA5ioZJCOEbixtAFwHSyNqr2fBg7AugZ0CdSAYOhgo6IOIEi0GeTN4QVwBvIWZ3zjpPNWXOks5QJwlWzlM80CAFSt5qsnHUBohAnf7vVKCwDj76H2v0b+0Tyn0tlxwGFg9F4yU7bc5qAAVBuYfJGnA5igvq0fXWoA1DWuF8C55RHYGaG6B82MrTjQxCIxbCZeAGeGHcoEUM0p+5kCtgFwfBdq/msUm/xcTAADwsHUucnlGVvyqSEY5EJnxkAdQPjjlomj08Qi9Ybo6hNd4zY/E0LfeN2DTngebQVgSk/p0pO6EfQtY7zUaEDQpJL5E2EAwSNK0gtbH4WvhdsMwb8Ct0SaRKZkW3ABFpgQAHnCWgRgAvZFiee5CaD6cW8Dftw1ACZA444O9wggaOLVXNU2M5zIrP4xoNXsZ6PPAWegR0MZ80qrOaCKlOrd/mgQGZDFvqwmgD//HRKVPOC9GACCUZEs8nQAN7rNtpLr+Ww+02Q+W+i6xAbgNRjOiMbdG4ClEKuDXg2AWzROJJYhGDw0d9cpzT6azf8KXqK0WgWfBwHYIDi+SCkXGguhBYCrDZoQPbkBFFqkgFnBgeT6bMoG4AjyVRaHewIQVgBql1uQNQCODi/Q6skEcIk6DaVER2LL/t4bgGF+MQ18YAh/VKt+iv5fUKvbAJjA8SU7HAUBaHt6w6BhA/DiEGncp/0DiJosNnHqhuAUr56CALTecbcAPoYBGForCerB+QuMR9kGwOgJLfKudwxghJeghy8IYJxfCxzqAITOBtWwPfIBqC3A8S13CiCLhloP4J2vg4EcSP0XGg+17qyO2PhEAEZ4VPTMAbd9AFgkyr01z8x9j7pDSQaA1lIBAMZLyV89gEkCvA1G/7jngEvhHfMSAPLQGXUAPoQByNe/1QI4OB4vfC/GDJhMgrnrBwYQj4qeVfAV3d3rCCDauJ9FPgCXlkf4q4z+rn/Q2dZDAb0bOSiuYKgFsGobXIcYZhh9FfwyAMY39QAGTgFJsDfGX5OkSPC9uI/h6wBqzmw4NkxiGPnpIsTS4lAAscbtvhPi3vLxAEg8uMGJ/HoAq4kf8OMvdDOMbge0h6XZOYABq5CwLOnj+0vJX/0OnP29JP/ttBVrAFajogoitdV3QtQaRfi+bW1xqcIBhJaf3Atgcmhaclf6g5ZOe695Llj1jh7Tqx5ANE74dkJWbvZ3PQTfhwAYYIYmQfYZf5+b8NfcG4YBiEbFuYZLlEoXFrEXnGzBppd4LeEARsjyM/NpwL68YSb5goi0QOsgBACIx4mlBiAcJtg5f9hH2cJxX7e0AzDAFB1gho5ZqkPGX5j9xfJemgCIRkXhfST1FfAcOTFr+5+J/DYUwOLkSg1n+T4AFCMjHPvhVSEAFtBehTUgdNq1emzIX+mOAQwyRdeZoZ8fWCj8RutfJq0BhDM92ZUCwDkYXti0aaUGdbmmbQCgdYa0YwDJXvBFgnd9YJfUAxh5HHlXun8XKS576WK1LwBB9nSnAqxxhYnXfPidnp0eN81H0xrACMc1EZ11gd6izddNeWs1ATB6Mo19+9CA0MSD4tIFAWgzUVo9ovX2pHvTgDRLZp0nQk0NUv19bcxfBwCLZKtH/7OcCVlGepjnlgAmhaFx9wEguG2cj8BlYQCemOOEPBOinzTG7djbELyuHYFP7zxReuN7Nvsj8jlqnhCuPYCWUVHtKulOq0BaAhilhsbdyxzwCcU9VdeFAQgvV61mPTKSloE8SzSnoT0COLm5PPfLpTtL9fP6YCrU3+mnqOYIpk06AGiOLwpAGXSiKq8h0RbAItU17l4ATMA2DAwUFwhgtQ7RLFDKSd9ONm/H/gBsL8/ru6lUfy2GXyJdAEwKbXtV4lIoE2zV3yNUV1sATY27n0NJYK6LQx0EAWhtNQcQjM76OPEmAFT40dVvu2RcXQA0RkWJC1r9lZjAIj3JZV1NADQ07n4ARDZ3dWUogLZWi+BESgXm15jAf9K3ACAbfenq42cj6zMQvBPyZGwiJPqZEAhgdDhCoyJYMoBdqOqt/QPeB/hxNwQQxdOb2AFMRu12QviD2jyicYqAxgDq9ioQnEh9QULYXciOJcEk5lqf1MveAeTRN6Zk9A1yv7dJ41NxCMAUdy6MD1gCMklSBpYrjnS9stE0BLCa0eO4gXs6FZegCUWgPyCsU291Kr5QCxSSlCFKZSddz0Cf7hxAf8hy93U8szVZ/LbOBIcPi10ZZ8Wutqxv7QBGOMg2WrOCL+KlfOVXCzUgNQYwSlKocQNPxV1l5oO6SlkBhNuO+WFihFavATBKr7VWp5YvaPoeLhmIZLwHAB/ObzxyfuC8kLvSfIqOwlpok6ZR8jUA8aiI1qwZDAc9yWeLRbmYL3MYppwZCRsAiDXuTqPkw0NJ0Bod6JKPAMQRthWA2EpIgkRXfVR1EgpTHhwovy2A8YM3WNvpubNzVQjA9qkwOwKIxxeIS4JTY8U88QSsmmf9agCgplgDPaJ7ABCAwlPQNAAQNxAGvtc8YGydtLzWbYQuaa0B6WLCvQ9y9+y+lLmzepMB10hXAKPDBA0XcM1a+pOzVbMePdJeLYBge3+PGhAtWAOPZcJWI3sVyrxQk0yl6u6t0zShS/s5oM8fYXrmNkPTJOtnJBXcy2lApB0wLp5MXRO27gs6mI7TH8J1yP4ATEDMa+491QRANE7g1B8XvnRS1P8bd7dH2icr9Dil1nhDr1kQmKN2NsAo+L14ANS0A56xXbvIgO7tjQCsKoVL0j0BiDbklpozQQCAUXpiWUhT2XgS6uWLKHT8jboA+OgZgv0V8mVIgzMgunQHEBwZ0nFJaFoQs3ur6XY1/K5kKd3m5QMQHkfZH4AFWGwZoQ1CAEStTvFXh3N7StGZFt69RtoPwfe+NYjfGfUXO4XZfhlC0+j6hAM4F3/nxpgATlTruFSLjEOarhp2LMUPdC15cfBm7MSOo0ZUHADoNWTJfME+Eam61IPih5Q9EE+yorC02vwEXS/bqGffqopmM72PWITyRnEDOxiiHx7dUpOv+vysJh9rrWytZ8TkkbIFA7D8i/89N2soorksrDtAV114uJjRLHH03U1ylgwcOTYt/oI3o3nm/nLWuFqJFrPjblH1H1HcLnN2s1HAg/4dleJv7UGLTJUl9zVbbX4CWy2vF63GnZQtlrCTZqST9FTdNdIBQO/P138lmz/+aOEHsy+hv+KsXMwrWSxKsi/cLPj2B5AVDXNHbICkk0pmE2/aSS8TIZWfKTn+0noZEm1sZ8S002LKpd46KmxwYU1wV6ZmKf1mtk+AyDBmK1CnR0STgx5UVm48qF6ybauteq1I8cSwofYj8jIAxt/5MqSxK+peZcURGXSfRxLRSatWl3cD8MHmiurehVNyL5YhIcHYBnnH0gnA+NGyH3caVBlbhnTZDRnkXUg3DWiLlRoUF5UH2Ppx/HqXIYPsRboBaLEFTs8OPNvAUnhI8k9fXvcscJBdSzcAx2aEhMCobNwS89qXIYPsWroBaAnRERoWkCvP42EZ8rGloxnGDBQ4PXsMApB70wzLkA8uHQH8ZgEwLC6lXIZ8GdYhH1k6Amg6BU6DY+Nfctf8tieTBnkP0g1AM1RqNSmscUQQQgMcTc++dvBLHeTtSzcAn79bAAxOzsAu7XI2ZJA3Lx0B/G0CGJyhsLtf6iBvXzoOwUacwGl4hkJ+PG76c1CBH1g6AmgcDGlU1ze+DGkUnneQdyUdAXywABhmBpyA43H/9dK9MMiLSUczzC8TwAY5WvlGSofjcYO8dekI4L1pBgzP0aqWIYMp8MNKRwCNzeDwDHFE+PG4YRnycaV/AIO8sYR0Px4nJCFRwlbMQbym6IoUTSLyH+chhoKLu5aiQRGruNq2qdq2Im2zntFoXuXrlq5nQnRvhGBfBCrieNy/O2pAnTnPIY4ixScm00anWHcr2hmfyHEU6F1JVwD1zeDgHJlMxPG4TssQehRstJgvl3m+XM7m5dZEUggpmi3ms6poXhUlB1ltB6mvsy2V7Np50+01LXG9dbYr45VY5doMrEnOq2dl1balu23eOjN3sM5XK30DWJ8gCQlXgV+7+KVW76ikgQzkoeTcdT4/oWepYdHJcnEY6QeyQdgNR5w7kNowF2mVjGbpqQ6w6NeRCKNV22DjlvNMa1tiS5+oenPWLCrBa5COAFq8EUJ34pjc0/tXy5C2fqnV+ym1EBE8jIs5fj2RkBt60TifR1qQcDPwkHnXTN7KCaA//p92XRpdW9t2CBMdRYk/dtzy4wGobYU08EXg0vF4XBr97QiSMzdihJ04QjqRmH8oM1ITACctAcTXFSsSEMnRNgBVjQb8gADe6QAG+yLwCh4pgD+Obr+0aX4alc5YaiBTPZGiGlgd+oPQCvXl3gGs7jFzxDMhbVM6MPF35scDUM9aGJamGoo4HtfKGO2NZxrnMJ1e4Z2TkdmTNa/4XgBcRVtPWTgPHQDUH/lRB7Bx3sMOx+MM/rAWiZdbpdc2Gn9aBKWKNDUP3DOAq0QPiam1TRE4AKg/8oMOoD9JpkXuW/ul6hHFq5VljsL6VfiI0WuD0l6YRclb3qiKewbQGkBsJK7DqJJVfJ4jCEGej4mvyg8IoH40fXr2vYkZkMp5W7/U9ALmVMhn5VX1PNTMIj8U6QkOYc4BEkYxW0VJtphN0FsWK5G+Acytsf1GsuActW2RXUTRVTmHixKRbEsBuLRFCwxOjvB6pCuAY90O/TvwSIjqcqZEfxx9abgMwZO6OU/sUglc67JpYAGTR8azK1k0g1XI9KM9AxhbwmMqOYTZFHhyHNq2kVozyWRbCbjr+5CuAGqbwdMzX5pgh1xyS0yzZQh6cSSPFdu4StI0SkBs7hFRa4hVEmicxhJbpSC7GTTj9g5gcqiH9dvISH4JzFxHTJK0bQXZylG/JKHKFYClrc43p/96APBSA7CBNxYXfjzuj4a26ATOnFBuy2o9y7+KJ0uyU4aSMiyi0UpVcgHHPznQ9a4B3WSgyekiugAlRxWB4jFK5mmQGG1969I5QKUOYKOtYCZjsSHcZBmS4sS1KLdqQnOV8pDZEU5aNcM25+pCmK+BrVn2CWChUkNX5XDbLugzyseIBgAtcq4B6MlQ45JWx+MOUSa0Ef6S5jmjccVXEaIlzv/zhIuilOaZkbpg1wBuUFZVPbb+qFKPOZndCveeAUBDdG+ERr4IvOf58bgmlpi/AQH51nDrK6I50RoJ50llD19EGoAIgTlDYI8AJiqDzUTbEKRfZ4tr6F02AGjAg7wRmm8FMxG7IeEqEEJle78F0W0CDJkYLs4tRRPwdbFnDQjSPwOjpVZmBf4t7zoAyLvtoAcAn8XxuPBlyAlYgmQ2V2Dl2wlfsg0FwDJ/rfsEENy7sFmRsXIfANRlfIcBDD6WjmTN6gj3SwUprGpzI8OXbMviCKeI870DuFTK2WyaWV7edQCQ95umAZv6IvBamh6Pgylr9SRSZln5kpfWt7ZSBWZ6Sr/dAlhEKmNd0C7GAKCBziMGsGVNTbPHQfNdFvm3UAo1x7PjBHjLHbmAzUuaGaIdGWZg8vEyZB8XGqKdWWvelHQG8AED2OBYOpKGx+NUIlKHVlMCR2u7soTJ6SlNe9uK2+h3rhOoAd+HdDbD3GMAvzc5lKmEjuRTkj0ubEM4gaOmbj3Ti0ItY9eAWom+AZyVFtlG6PBJLhPBeh9G3nVhq3NUX8Nrk84AjrWt4HYAyigdodnj0rx+hs9LguliZp3ow6S8elbdnfkDUptjAhW52Ii+sIytYofO7w/4FieGnQFE3ggt3AG5NDseV0RbeWHdGgQMc7lLV45yVdtmrwAua26k39ffix8SQO1oeoudECr8eFxY9rgVALBu8g6HuZWrDNanLwMg34QpbVmE/+JoDQCa8g1PApt7w3Bhe3phyxA4aNZ1OgTQWeiFAFzBG1+I1tpkPgDokvOzHvbiJvJ43HHIMuRdAqjvW2ulBwAdgo+mN4uOBWUt/FIDZoEYwPAh2FXmy2sAUGpAe+kBQEdH6gC224yrKvodvhtS1Nr2lIBXmjt3xMAiZBcA2gdV+xwwEEDrOaePCODYiI3QJDwWlHuxIVy/G1KtggEywavgid1OhnHufxUcL+cWIbBAWyE7lBcM4MxWp22r+5VLdw1oHE3vmHYpyC/VHLuckr68Idq5E3JhbOgEAzgcShJdYwTKb2uJkcfjbutVIHIwqBuC6/Zbsal6FwC6TMtwepDyihdhAA57wRgbqALb7gdPwqN0XED/Af8eajXAyuHavmsCMdjuZi/YGa1Q4Sa08/YqU6KHiRu8YUzRvBHOGkdok9LgeJztzbkkqdOWhr/W3gBM0OzTUmgxAFgrlkD5XTeE65chdV7OuKw6FGwcuqCiO7fu80xIbvw4VlJGxQBgMDVMfpy1CNEmhZt0vgaMwUWRa9N3TVLpy461pakCwfd8Sb1Pj2j149ga9WwGDRggCMDPP7pYYhocj4Nvrizs74JPyovoWt7AFsMWGuxYwKD9AfiEjuTppQYAgwR6I3z6dNo5A3tQvNQUHScz3kURzWh8ZaoGIWHZSi+bFGoE5sPg/gCEbj25EbB/ADAYGiFHR3Q/uE18BNrP4cfj/kYHarVXV+Gp4iKgMdYECuhSYdTe4xwQRK0xiw0ABgn0RjiK/uhkiQk/HgepypP0b/TlhtJJgiPQNAvFSIVW1mGFy5l8VPDP9ngwHUQYybS2DQCGCNoMPr49Yivhtsbo8ONxq60KqjLDqWlGwrAXkxjfCTT0kbi98C2n0XVuqKB9xoYBMZaqHwAm8HBYBYcw810ASP1JuQps6xYYnj0OzN8JJyrKeHoCleN1Qs7FXStYl4fRhQzOfBFl8P0Lx3cAoLndwNbJAECaHgyVIPXU7ISc8HuhyF3LDITHImuomRtAS52eBFGvVnoA8LfSgNNq8fDprItbYIO0DcjdZEkj+HA85qo6Fm8FWmKIUoxSsXUFglmquDFIA1oFAljbPH+AShi7kLZNYa4yAAx7wW5R3gjkVFt0e/SDItTSLbDB8TiwfCXzvTl/JcViCTUjG9MQrLJolIHEDcBEAwG0nz2DANqOp6Fb2k/FlfxuRXIFfgQgFFs5Q7GGNQCtp+Le4FnNHgAER9N/RLc/KxU4bR0iodHxOBT4mSw55ovFfJaD15aP5FvewnjStOhivoQhovMrOYhDI6PlgRdkxpm5CzDbeHCU/BMU6rVq20x/DrA+99b4EYOUY2+Er9Hx7Zef3SwxDdI2pNh3SeZ/E39PVKIQtNo0i06QM+d+AUQTBNU29NGM29oHAC3ySwFIsPkXX4a0rbNJ9jiH95wQaHLx5rSh/KWg2r0CSML0ekuqZfQAoEWAN8LXiCxfmSWm9QHNJsfj3Om3KFMwB2HqyBRHy1aT/ydY634BjP6JFp6MTyD80gCgRcBmMF28/slVYPOMIawXmxyPqxBzYKUxFRG7TeZAgqyh4ZvbO4Dux5jgdIUDgBYBAFK1dfzlM0WorSWmyfE4otgOLUqwWk1eGy+jGsYWekZUaqxeRNiqu38Aq9Ibmy5nyWTB5GDIlmmRS6AByQ7G7W03S8xv7pcalj3ukKSbydHigxkzTKvsquJmjpN5xZN8fq2nFiYAeoQCWPpKCAB9olJ18XuStuGFEWsc9PVJ7Cm61H0/JIBqM/iYQvMzYiqw7QHNBsfjqKQkD/qM6Ab69vLl/MqeMJ1++qXkRUnh5ZyZ7LBUeNnOnAnJotWqosUji2hV/d/CV2Q+14/oVa24oo/B18C5pXGJv8rFBzwVBwCccl9maonpckCzadqGhC42snJRSZn9TxRFzk0ppk62JSlbltQgvXEU3bswT7Er+hi8ccUmIGjgm5YeABTeCCq0EFGBHaqVfqkBx+O4FJC41H88DH6dJCfWMtYYaeI8G3eZ8ZTg2y+eSpLExj16jCixPMfGV+XFmxuA+wHwQALIfQj+HXG3wBZZa6iwWWXD7HGrJCUSsiFf8KKvUb1Uj0Eyyb3OxvUvPQCoAuVPhRPLn93cAnnahqbZ4wZ5g9KHBrwTGvBU1Hr8hbsFNk+dSSX8eNwgb1z6AFB6I/whgfm/iJ1O+t3ugKY8HhdmiRnk7UofAD4oAAUw/4o6GaNFlUc1GRgGefPShxnmXgEoDCe3tz+ZMbqtZ3Tw8bhB3rb0AaAMlP9V8SKM0S3dAsXxuC/DMuSdSx8Ays1goLBuvxxNu7gF0uNxxLI9zALft/QCoNgMhnGtpCWmXZ3DMuSDSB8AThSAChdhiWnrFhh+PG6Qtyy9AMg2g8mACQ5yCM/og5a2wIbZ4wZ5m8IBXHcRBmCFC/JfkZaYcbtK74Rf6st1ziC7lxHbsbjsJHwjZIrHy9vjH10q55UGZ48b5E3K6KwvMdL9sgOa6sRSOwn1Sx3kbQoHcNpJOCunmga8PZp2qZtTHXQ8bpC3Kv1oQAbMD63un9UypKP+G3ZD3rv0NwSb7lO3X477qPbnl2Ed8n5l9OP09EdnIVWcnhrTtdvoj+61nw5OWe9Z/j9pdWvxKG/BiAAAAABJRU5ErkJggg==";
+  const LOGO_ICON = "data:image/png;base64,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";
+  // Put the logo into every <img data-logo="...">
+  document.querySelectorAll("img[data-logo]").forEach(img =>
+    img.src = img.dataset.logo === "wide" ? LOGO_WIDE : LOGO_ICON);
+
+  // Makes user-typed text safe to put into the page
+  function esc(text) {
+    return String(text ?? "").replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  // A date N days from today, as "YYYY-MM-DD"
+  function dateFromToday(n) {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  const TODAY = dateFromToday(0);
+
+  function fmtDate(s) {
+    if (!s) return "-";
+    return new Date(s + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+  function fmtTime(t) {
+    if (!t) return "-";
+    const [h, m] = t.split(":");
+    return (h % 12 || 12) + ":" + m + (h < 12 ? " am" : " pm");
+  }
+
+  // ---------- Saving & loading (browser storage) ----------
+  function load(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+    catch (e) { return fallback; }
+  }
+  function saveAll() {
+    try {
+      localStorage.setItem("ce_events", JSON.stringify(events));
+      localStorage.setItem("ce_students", JSON.stringify(students));
+      localStorage.setItem("ce_regs", JSON.stringify(registrations));
+      localStorage.setItem("ce_feedback", JSON.stringify(feedback));
+      return true;
+    } catch (e) {
+      alert("Could not save: browser storage is full. Try a smaller image.");
+      return false;
+    }
+  }
+
+  // ---------- Starting (sample) data ----------
+  function makeEvent(o) {
+    return Object.assign({
+      id: Date.now(), acYear: "2026-27", sem: "Odd", type: "Workshop", title: "", coord: "", desc: "",
+      poster: "", flyer: "", letter: "", start: TODAY, end: "", startTime: "", endTime: "",
+      duration: "Half Day", venue: "", guest: "", guestDesig: "", guestInst: "", guestPhoto: "",
+      batch: "All", od: [], feedbackOpen: false, orgDept: "", assoc: "", details: {}
+    }, o);
+  }
+
+  const seedStudents = [
+    { name: "Alex Johnson", roll: "201", dept: "CSE", section: "A", year: "Year 2" },
+    { name: "Student A",    roll: "101", dept: "CSE", section: "A", year: "Year 2" },
+    { name: "Student B",    roll: "100", dept: "CSE", section: "B", year: "Year 2" },
+    { name: "Priya Kumar",  roll: "202", dept: "ECE", section: "A", year: "Year 2" },
+    { name: "Rahul Singh",  roll: "301", dept: "CSE", section: "A", year: "Year 3" },
+    { name: "Divya R",      roll: "302", dept: "ECE", section: "B", year: "Year 3" },
+    { name: "Arjun M",      roll: "401", dept: "MECH", section: "A", year: "Year 4" },
+    { name: "Sneha P",      roll: "111", dept: "CSE", section: "A", year: "Year 1" },
+    { name: "Karthik S",    roll: "112", dept: "ECE", section: "A", year: "Year 1" }
+  ];
+
+  const seedEvents = [
+    makeEvent({ id: 1, orgDept: "CSE", assoc: "IEEE Student Branch", title: "IoT Workshop", type: "Workshop", start: dateFromToday(12), startTime: "09:00", endTime: "12:00",
+      venue: "Auditorium", guest: "Alex Da", guestDesig: "IoT Engineer", guestInst: "TechCorp", coord: "Rendhara",
+      batch: "Year 2", od: ["101"], desc: "Hands-on session building IoT devices with sensors." }),
+    makeEvent({ id: 2, orgDept: "AIML", title: "AI & ML Seminar", type: "Seminar", start: TODAY, startTime: "14:00", endTime: "16:00",
+      venue: "Seminar Hall", guest: "Dr. Meena", guestDesig: "Professor", guestInst: "IIT Madras", coord: "Rendhara" }),
+    makeEvent({ id: 3, orgDept: "IT", title: "Coding Hackathon", type: "Hackathon", start: dateFromToday(20), end: dateFromToday(21),
+      startTime: "09:00", endTime: "18:00", duration: "2 Days", venue: "Lab Block", coord: "Kumar" }),
+    makeEvent({ id: 4, orgDept: "CSE", title: "Cultural Night", type: "Cultural", start: dateFromToday(-10), startTime: "18:00", endTime: "21:00",
+      venue: "Open Air Theatre", coord: "Lakshmi", od: ["201", "302"], feedbackOpen: true })
+  ];
+
+  const seedRegs = [
+    { eventId: 1, roll: "101" }, { eventId: 1, roll: "100" }, { eventId: 1, roll: "201" },
+    { eventId: 3, roll: "201" }, { eventId: 4, roll: "201" }, { eventId: 4, roll: "302" }
+  ];
+  const seedFeedback = [{ eventId: 4, roll: "302", rating: 5, comment: "Loved the performances!" }];
+
+  // ---------- App data ----------
+  let events        = load("ce_events", seedEvents);
+  let students      = load("ce_students", seedStudents);
+  let registrations = load("ce_regs", seedRegs);
+  let feedback      = load("ce_feedback", seedFeedback);
+  let user          = load("ce_user", null);
+
+  let currentTab = "upcoming";   // faculty dashboard tab
+  let myTab = "registered";      // student "My Events" tab
+  let editingId = null;          // which event is being edited
+  let temp = {};                 // form uploads + OD selection while editing
+
+  // ---------- Event helpers ----------
+  function statusOf(ev) {
+    const end = ev.end || ev.start;
+    if (end < TODAY) return "completed";
+    if (ev.start > TODAY) return "upcoming";
+    return "ongoing";
+  }
+  function statusBadge(s) {
+    const color = { upcoming: "blue", ongoing: "amber", completed: "green" }[s];
+    return `<span class="badge ${color}">${s[0].toUpperCase() + s.slice(1)}</span>`;
+  }
+  function regsFor(id) { return registrations.filter(r => r.eventId === id); }
+  function findEvent(id) { return events.find(e => e.id === id); }
+  function initials(t) { return t.split(" ").map(w => w[0] || "").join("").slice(0, 2).toUpperCase(); }
+  function media(ev) {
+    return ev.poster
+      ? `<img src="${ev.poster}" alt="poster">`
+      : `<b>${esc(initials(ev.title))}</b><small>${esc(ev.type)}</small>`;
+  }
+  function byDate(a, b) { return a.start.localeCompare(b.start); }
+  function deptSec(s) { return (s.dept || "-") + " / " + (s.section || "-"); }
+
+
+  // =====================================================
+  // LOGIN / LOGOUT
+  // =====================================================
+  function facultyLogin() {
+    if ($("facPass").value !== "admin123") { alert("Wrong password (hint: admin123)"); return; }
+    user = { role: "faculty", name: $("facName").value.trim() || "Faculty" };
+    localStorage.setItem("ce_user", JSON.stringify(user));
+    startApp();
+  }
+
+  function studentLogin() {
+    const name = $("stuName").value.trim(), roll = $("stuRoll").value.trim(), year = $("stuYear").value;
+    const dept = $("stuDept").value.trim().toUpperCase(), section = $("stuSec").value.trim().toUpperCase();
+    if (!roll) { alert("Please enter your roll number."); return; }
+    let s = students.find(x => x.roll === roll);
+    if (!s) {
+      if (!name) { alert("New student? Please enter your name too."); return; }
+      s = { name, roll, dept, section, year };
+      students.push(s);
+      saveAll();
+    }
+    user = { role: "student", name: s.name, roll: s.roll, year: s.year };
+    localStorage.setItem("ce_user", JSON.stringify(user));
+    startApp();
+  }
+
+  function logout() {
+    localStorage.removeItem("ce_user");
+    user = null;
+    startApp();
+  }
+
+  function startApp() {
+    $("loginScreen").classList.toggle("hidden", !!user);
+    $("facultyScreen").classList.toggle("hidden", !user || user.role !== "faculty");
+    $("studentScreen").classList.toggle("hidden", !user || user.role !== "student");
+    if (!user) return;
+    if (user.role === "faculty") {
+      $("facWelcome").textContent = "Welcome, " + user.name;
+      showPage("dashboard");
+    } else {
+      renderStudent();
+    }
+  }
+
+
+  // =====================================================
+  // FACULTY PORTAL
+  // =====================================================
+  function showPage(name) {
+    document.querySelectorAll("#facultyScreen .page").forEach(p => p.classList.add("hidden"));
+    $("page-" + name).classList.remove("hidden");
+    document.querySelectorAll(".sidebar a[data-page]").forEach(a =>
+      a.classList.toggle("active", a.dataset.page === name));
+
+    if (name === "dashboard") renderDashboard();
+    if (name === "events")    renderEventsTable();
+    if (name === "students")  renderStudents();
+    if (name === "reports")   renderReports();
+    if (name === "profile")   $("profName").value = user.name;
+  }
+
+  // ---------- Dashboard ----------
+  function setTab(t) { currentTab = t; renderDashboard(); }
+
+  function renderDashboard() {
+    const odTotal = events.reduce((n, e) => n + e.od.length, 0);
+    $("stats").innerHTML = `
+      <div class="stat"><b>${events.length}</b>Total Events</div>
+      <div class="stat"><b>${events.filter(e => statusOf(e) === "upcoming").length}</b>Upcoming</div>
+      <div class="stat"><b>${registrations.length}</b>Registrations</div>
+      <div class="stat"><b>${odTotal}</b>OD Granted</div>`;
+
+    document.querySelectorAll("#tabs span").forEach(s =>
+      s.classList.toggle("active", s.dataset.tab === currentTab));
+
+    const q = $("search").value.toLowerCase();
+    const list = events
+      .filter(e => statusOf(e) === currentTab && e.title.toLowerCase().includes(q))
+      .sort(byDate);
+
+    $("eventGrid").innerHTML = list.length
+      ? list.map(facultyCard).join("")
+      : `<div class="empty">No ${currentTab} events.</div>`;
+  }
+
+  function facultyCard(ev) {
+    return `
+      <div class="ev-card">
+        <div class="media">${media(ev)}</div>
+        <h4>${esc(ev.title)}</h4>
+        <p><b>Date:</b> ${fmtDate(ev.start)}</p>
+        <p><b>Venue:</b> ${esc(ev.venue)}</p>
+        <p><b>Coordinator:</b> ${esc(ev.coord || "-")}</p>
+        <p><b>Participants:</b> ${regsFor(ev.id).length} registered / ${ev.od.length} OD</p>
+        <div class="actions">
+          <button class="btn-light"   onclick="editEvent(${ev.id})">Edit</button>
+          <button class="btn-primary" onclick="viewDetails(${ev.id})">View Details</button>
+          <button class="btn-danger"  onclick="deleteEvent(${ev.id})">Delete</button>
+        </div>
+      </div>`;
+  }
+
+  // ---------- All events table ----------
+  function renderEventsTable() {
+    $("eventsTable").innerHTML = events.slice().sort(byDate).map(ev => `
+      <tr>
+        <td>${esc(ev.title)}</td><td>${esc(ev.type)}</td><td>${fmtDate(ev.start)}</td>
+        <td>${esc(ev.venue)}</td><td>${esc(ev.batch)}</td><td>${statusBadge(statusOf(ev))}</td>
+        <td><button class="btn-light" onclick="viewDetails(${ev.id})">View</button>
+            <button class="btn-light" onclick="editEvent(${ev.id})">Edit</button></td>
+      </tr>`).join("") || `<tr><td colspan="7">No events yet.</td></tr>`;
+  }
+
+  // ---------- Create / Edit form ----------
+  // Maps each form input id -> the event property it stores
+  const formFields = {
+    fYear: "acYear", fSem: "sem", fTitle: "title", fOrgDept: "orgDept", fAssoc: "assoc", fCoord: "coord", fDesc: "desc",
+    fStart: "start", fEnd: "end", fStartTime: "startTime", fEndTime: "endTime", fDuration: "duration",
+    fVenue: "venue", fGuest: "guest", fGuestDesig: "guestDesig", fGuestInst: "guestInst", fBatch: "batch"
+  };
+
+  // ---------- Event type (with "Others") ----------
+  const TYPES = ["Workshop", "Seminar", "Guest Lecture", "FDP", "Hackathon"];
+  function toggleOtherType() {
+    $("fTypeOther").classList.toggle("hidden", $("fType").value !== "Others");
+  }
+  function readType() {
+    return $("fType").value === "Others" ? $("fTypeOther").value.trim() : $("fType").value;
+  }
+  function writeType(t) {
+    if (TYPES.includes(t)) { $("fType").value = t; $("fTypeOther").value = ""; }
+    else { $("fType").value = "Others"; $("fTypeOther").value = t || ""; }
+    toggleOtherType();
+  }
+
+  // Reads everything currently typed in the form (without saving)
+  function collectForm() {
+    const data = {};
+    for (const id in formFields) data[formFields[id]] = $(id).value.trim();
+    data.type = readType();
+    Object.assign(data, {
+      poster: temp.poster, flyer: temp.flyer, letter: temp.letter, guestPhoto: temp.guestPhoto,
+      od: temp.od, details: temp.details
+    });
+    return data;
+  }
+
+  function newEvent() {
+    editingId = null;
+    fillForm(makeEvent({ start: "", coord: user.name }));
+    $("formTitle").textContent = "Create New Event";
+    showPage("create");
+  }
+
+  function editEvent(id) {
+    closeModal();
+    editingId = id;
+    fillForm(findEvent(id));
+    $("formTitle").textContent = "Edit Event";
+    showPage("create");
+  }
+
+  function fillForm(ev) {
+    for (const id in formFields) $(id).value = ev[formFields[id]] || "";
+    writeType(ev.type);
+    temp = { poster: ev.poster, flyer: ev.flyer, letter: ev.letter, guestPhoto: ev.guestPhoto,
+             od: [...ev.od], details: { ...(ev.details || {}) } };
+    ["fPoster", "fFlyer", "fLetter", "fGuestPhoto"].forEach(id => $(id).value = "");
+    showPreview("posterPreview", temp.poster);
+    showPreview("guestPreview", temp.guestPhoto);
+    $("flyerName").textContent  = temp.flyer  ? "📎 " + temp.flyer  : "";
+    $("letterName").textContent = temp.letter ? "📎 " + temp.letter : "";
+    renderParticipants();
+  }
+
+  function showPreview(id, src) {
+    $(id).src = src || "";
+    $(id).classList.toggle("hidden", !src);
+  }
+
+  // Reads an image file and keeps it as text (data URL)
+  function readImage(input, key, previewId) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) { alert("Please choose an image smaller than 1 MB."); input.value = ""; return; }
+    const reader = new FileReader();
+    reader.onload = () => { temp[key] = reader.result; showPreview(previewId, reader.result); };
+    reader.readAsDataURL(file);
+  }
+  $("fPoster").onchange     = function () { readImage(this, "poster", "posterPreview"); };
+  $("fGuestPhoto").onchange = function () { readImage(this, "guestPhoto", "guestPreview"); };
+  // Flyer & letter: we only keep the file name for now (real files need Firebase Storage)
+  $("fFlyer").onchange  = function () { temp.flyer  = this.files[0] ? this.files[0].name : ""; $("flyerName").textContent  = temp.flyer  ? "📎 " + temp.flyer  : ""; };
+  $("fLetter").onchange = function () { temp.letter = this.files[0] ? this.files[0].name : ""; $("letterName").textContent = temp.letter ? "📎 " + temp.letter : ""; };
+
+  // ---------- Participants selection ----------
+  function uniq(list) {
+    return [...new Set(list.filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }
+  // Fills a dropdown, keeping what was already chosen
+  function setOptions(select, values, allLabel) {
+    const current = select.value || "All";
+    select.innerHTML = `<option value="All">${allLabel}</option>` +
+      values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+    select.value = values.includes(current) ? current : "All";
+  }
+  function fillParticipantFilters() {
+    setOptions($("pDept"), uniq(students.map(s => s.dept)), "All Departments");
+    setOptions($("pSec"), uniq(students.map(s => s.section)), "All Sections");
+  }
+
+  // Students shown in Participants Selection (filtered + sorted)
+  function batchStudents() {
+    const batch = $("fBatch").value, dept = $("pDept").value || "All", sec = $("pSec").value || "All";
+    const order = [$("pSort").value || "dept", "dept", "section", "roll"];
+    return students
+      .filter(s => (batch === "All" || s.year === batch) &&
+                   (dept === "All" || s.dept === dept) &&
+                   (sec === "All" || s.section === sec))
+      .sort((a, b) => {
+        for (const key of order) {
+          const c = String(a[key] || "").localeCompare(String(b[key] || ""), undefined, { numeric: true });
+          if (c) return c;
+        }
+        return 0;
+      });
+  }
+
+  function renderParticipants() {
+    fillParticipantFilters();
+    const list = batchStudents();
+    const regRolls = editingId ? regsFor(editingId).map(r => r.roll) : [];
+    $("participantsBody").innerHTML = list.length ? list.map(s => {
+      const selected = temp.od.includes(s.roll);
+      const pre = regRolls.includes(s.roll);
+      return `
+        <tr>
+          <td><input type="checkbox" style="width:auto" data-roll="${esc(s.roll)}" ${selected ? "checked" : ""}
+                     onchange="toggleOD(this.dataset.roll, this.checked)"></td>
+          <td>${esc(s.name)}</td>
+          <td>${esc(s.roll)}</td>
+          <td>${esc(s.dept || "-")}</td>
+          <td>${esc(s.section || "-")}</td>
+          <td>${pre ? '<span class="badge green">Pre-Registered</span>' : '<span class="badge">Not registered</span>'}</td>
+          <td>${selected ? '<span class="badge blue">OD Approved</span>' : '<span class="badge">—</span>'}</td>
+        </tr>`;
+    }).join("") : `<tr><td colspan="7">No students match these filters.</td></tr>`;
+    $("pCount").textContent = `${list.length} student(s) shown · ${temp.od.length} selected for OD`;
+  }
+
+  function toggleOD(roll, on) {
+    temp.od = temp.od.filter(r => r !== roll);
+    if (on) temp.od.push(roll);
+    renderParticipants();
+  }
+
+  function selectAll() {
+    const list = batchStudents();
+    const allSelected = list.every(s => temp.od.includes(s.roll));
+    list.forEach(s => {
+      temp.od = temp.od.filter(r => r !== s.roll);
+      if (!allSelected) temp.od.push(s.roll);
+    });
+    renderParticipants();
+  }
+
+  // ---------- Save / feedback / report ----------
+  function saveEvent(silent) {
+    if (!$("fTitle").value.trim() || !$("fStart").value || !$("fVenue").value.trim()) {
+      alert("Please fill Title, Start Date and Venue.");
+      return null;
+    }
+    if (!readType()) { alert("You selected Others: please type the event name."); return null; }
+    if ($("fEnd").value && $("fEnd").value < $("fStart").value) {
+      alert("End date cannot be before start date.");
+      return null;
+    }
+
+    const data = collectForm();
+
+    let ev;
+    if (editingId) {
+      ev = findEvent(editingId);
+      Object.assign(ev, data);
+    } else {
+      ev = makeEvent(Object.assign(data, { id: Date.now() }));
+      events.push(ev);
+      editingId = ev.id;
+    }
+    if (!saveAll()) return null;
+
+    if (!silent) { alert("Event saved! ✅"); showPage("dashboard"); }
+    return ev;
+  }
+
+  function sendFeedback() {
+    const ev = saveEvent(true);
+    if (!ev) return;
+    ev.feedbackOpen = true;
+    saveAll();
+    alert(`Feedback form sent to ${regsFor(ev.id).length} registered student(s). They can fill it after the event from their portal.`);
+  }
+
+  function generateReportFromForm() {
+    const ev = saveEvent(true);
+    if (ev) printReport(ev.id);
+  }
+
+  function deleteEvent(id) {
+    if (!confirm("Delete this event? This also removes its registrations.")) return;
+    events = events.filter(e => e.id !== id);
+    registrations = registrations.filter(r => r.eventId !== id);
+    feedback = feedback.filter(f => f.eventId !== id);
+    saveAll();
+    renderDashboard();
+  }
+
+  // ---------- Event report (used in View Details + Print) ----------
+  function reportHTML(ev) {
+    const regs = regsFor(ev.id);
+    const fb = feedback.filter(f => f.eventId === ev.id);
+    const rows = regs.map(r => {
+      const s = students.find(x => x.roll === r.roll) || { name: "Unknown", year: "-" };
+      return `<tr><td>${esc(s.name)}</td><td>${esc(r.roll)}</td><td>${esc(deptSec(s))}</td><td>${esc(s.year)}</td>
+              <td>${ev.od.includes(r.roll) ? "OD Approved" : "Pending"}</td></tr>`;
+    }).join("");
+    const guestExtra = [ev.guestDesig, ev.guestInst].filter(Boolean).map(esc).join(", ");
+
+    return `
+      <div class="report">
+        <img src="${LOGO_WIDE}" style="height:48px;margin-bottom:10px"><br>
+        ${ev.poster ? `<img src="${ev.poster}" style="max-height:160px;border-radius:8px;margin-bottom:10px">` : ""}
+        <h2>${esc(ev.title)}</h2>
+        <p>${statusBadge(statusOf(ev))} <span class="badge">${esc(ev.type)}</span></p>
+
+        <h3>Event Details</h3>
+        <table>
+          <tr><th>Organizing Department</th><td>${esc(ev.orgDept || "-")}</td></tr>
+          <tr><th>In Association With</th><td>${esc(ev.assoc || "-")}</td></tr>
+          <tr><th>Academic Year</th><td>${esc(ev.acYear)} (${esc(ev.sem)} Semester)</td></tr>
+          <tr><th>Date</th><td>${fmtDate(ev.start)}${ev.end && ev.end !== ev.start ? " to " + fmtDate(ev.end) : ""}</td></tr>
+          <tr><th>Time</th><td>${fmtTime(ev.startTime)} – ${fmtTime(ev.endTime)} (${esc(ev.duration)})</td></tr>
+          <tr><th>Venue</th><td>${esc(ev.venue)}</td></tr>
+          <tr><th>Batch</th><td>${esc(ev.batch)}</td></tr>
+          <tr><th>Coordinator</th><td>${esc(ev.coord || "-")}</td></tr>
+          <tr><th>Description</th><td>${esc(ev.desc || "-")}</td></tr>
+          <tr><th>Flyer / Permission Letter</th><td>${esc(ev.flyer || "—")} / ${esc(ev.letter || "—")}</td></tr>
+        </table>
+
+        <h3>Chief Guest</h3>
+        <p>${ev.guestPhoto ? `<img src="${ev.guestPhoto}" style="height:60px;width:60px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px">` : ""}
+           ${esc(ev.guest || "—")}${guestExtra ? ", " + guestExtra : ""}</p>
+
+        <h3>Participants (${regs.length} registered, ${ev.od.length} OD approved)</h3>
+        <table>
+          <tr><th>Name</th><th>Roll No.</th><th>Dept / Sec</th><th>Year</th><th>OD Status</th></tr>
+          ${rows || '<tr><td colspan="5">No registrations yet.</td></tr>'}
+        </table>
+
+        <h3>Feedback (${fb.length})</h3>
+        ${fb.length ? fb.map(f => `<p>⭐ ${f.rating}/5 — ${esc(f.comment)} <small>(Roll ${esc(f.roll)})</small></p>`).join("") : "<p>No feedback yet.</p>"}
+      </div>`;
+  }
+
+  // ---------- Popup helpers ----------
+  function openModal(html, wide) {
+    $("modalBox").innerHTML = html;
+    $("modalBox").style.maxWidth = wide ? "840px" : "";
+    $("modal").classList.remove("hidden");
+  }
+  function closeModal() { $("modal").classList.add("hidden"); }
+
+  function viewDetails(id) {
+    openModal(reportHTML(findEvent(id)) + `
+      <div class="form-actions">
+        <button class="btn-primary" onclick="printReport(${id})">🖨️ Print Report</button>
+        <button class="gen-btn" style="margin:0" onclick="openDetails('flyer', ${id})">✨ Flyer</button>
+        <button class="gen-btn" style="margin:0" onclick="openDetails('letter', ${id})">✨ Permission Letter</button>
+        <button class="btn-light" onclick="editEvent(${id})">Edit</button>
+        <button class="btn-light" onclick="closeModal()">Close</button>
+      </div>`);
+  }
+
+
+  // =====================================================
+  // FLYER & PERMISSION LETTER GENERATOR
+  // Step 1: check the event form is filled
+  // Step 2: ask the extra details in a popup
+  // Step 3: build the flyer / letter from all the details
+  // =====================================================
+  let docCtx = null;   // { kind: "flyer" | "letter", eventId: number or null (null = the open form) }
+
+  const THEMES = {
+    purple: { name: "Purple & Gold (college colours)", bg: "#5b1a8e", accent: "#fbc02d", soft: "#f5edfc" },
+    blue:   { name: "Royal Blue",                      bg: "#1e3a8a", accent: "#facc15", soft: "#e0e7ff" },
+    green:  { name: "Emerald",                         bg: "#065f46", accent: "#fcd34d", soft: "#dcfce7" },
+    dark:   { name: "Midnight",                        bg: "#111827", accent: "#f59e0b", soft: "#f3f4f6" }
+  };
+  const REQS = ["Venue booking", "Projector and sound system", "Refreshments", "Certificates for participants",
+                "Honorarium / travel for resource person", "Transport"];
+  const DEFAULT_REQS = REQS.slice(0, 4);
+
+  // The event we are generating for: a saved event, or what is typed in the form
+  function sourceEvent(eventId) { return eventId ? findEvent(eventId) : collectForm(); }
+
+  function missingBasics(ev) {
+    const m = [];
+    if (!ev.title)     m.push("Title");
+    if (!ev.type)      m.push("Event type name (you chose Others)");
+    if (!ev.orgDept)   m.push("Organizing Department");
+    if (!ev.start)     m.push("Start Date");
+    if (!ev.startTime) m.push("Start Time");
+    if (!ev.venue)     m.push("Venue");
+    return m;
+  }
+
+  // ---------- Wording helpers ----------
+  function typeLabel(t) {
+    if (t === "FDP") return "Faculty Development Programme (FDP)";
+    if (TYPES.includes(t)) return t.toLowerCase();
+    return t;
+  }
+  function withArticle(text) { return (/^[aeiou]/i.test(text) ? "an " : "a ") + text; }
+  function audience(ev) {
+    if (ev.type === "FDP") return "faculty members";
+    return ev.batch === "All" ? "students of all years" : ev.batch + " students";
+  }
+  function dateText(ev) {
+    return fmtDate(ev.start) + (ev.end && ev.end !== ev.start ? " to " + fmtDate(ev.end) : "");
+  }
+  function timeText(ev) {
+    return fmtTime(ev.startTime) + (ev.endTime ? " to " + fmtTime(ev.endTime) : "");
+  }
+
+  // Auto-written text (built from the event details using templates)
+  function autoHighlights(ev) {
+    const topic = ev.title || "the topic", g = ev.guest;
+    const byType = {
+      "Workshop": [`Hands-on sessions on ${topic}`, "Practical skills you can use in your projects",
+                   g ? `Guidance from ${g}` : "Guidance from industry experts", "Certificate of participation"],
+      "Seminar": [`In-depth talk on ${topic}`, "Latest trends and real-world applications",
+                  g ? `Interact with ${g}` : "Interactive Q&A session", "Certificate of participation"],
+      "Guest Lecture": [g ? `Special lecture by ${g}${ev.guestDesig ? ", " + ev.guestDesig : ""}` : "Special lecture by an expert",
+                        `Insights on ${topic}`, "Career and industry perspectives", "Open Q&A with the speaker"],
+      "FDP": [`Faculty Development Programme on ${topic}`, "Current research directions and teaching practices",
+              "Hands-on and discussion sessions", "Certificate for participating faculty"],
+      "Hackathon": [`Build solutions around ${topic}`, "Team up, code and present your ideas",
+                    "Mentoring from experts", "Exciting prizes and certificates"]
+    };
+    return (byType[ev.type] || [`${ev.type || "Event"} on ${topic}`, "Learn, participate and network",
+                                "Certificate of participation"]).join("\n");
+  }
+
+  function autoObjective(ev) {
+    return `The objective of this ${typeLabel(ev.type)} is to give ${audience(ev)} a clear understanding of ` +
+      `${ev.title} and its practical applications. It will help participants build knowledge and skills beyond ` +
+      `the classroom, interact with ${ev.guest || "subject experts"}, and apply what they learn in their ` +
+      `${ev.type === "FDP" ? "teaching and research" : "academic projects and careers"}.`;
+  }
+
+  // ---------- Step 1 + 2: check the form, then ask the extra details ----------
+  function openDetails(kind, eventId) {
+    const ev = sourceEvent(eventId);
+    const missing = missingBasics(ev);
+    if (missing.length) {
+      alert("Please fill these in the event form first:\n\n• " + missing.join("\n• "));
+      return;
+    }
+    docCtx = { kind, eventId: eventId || null };
+    const d = ev.details || {};
+    const val = v => esc(v || "");
+
+    let html = `<h2>${kind === "flyer" ? "✨ Flyer details" : "✨ Permission letter details"}</h2>
+      <p style="color:var(--muted);margin:4px 0 14px">Everything from the event form is already included.
+      Check or fill these extra details.</p>`;
+
+    if (kind === "flyer") {
+      html += `
+        <label>Highlights (one per line)</label>
+        <textarea id="dHighlights" rows="4">${val(d.highlights || autoHighlights(ev))}</textarea>
+        <button class="link" onclick="$('dHighlights').value = autoHighlights(sourceEvent(docCtx.eventId))">↻ Auto-write again</button>
+        <div class="row" style="margin-top:10px">
+          <div><label>Registration Fee</label><input id="dFee" value="${val(d.fee || "Free")}"></div>
+          <div><label>Last Date to Register</label><input type="date" id="dDeadline" value="${val(d.deadline)}"></div>
+        </div>
+        <div class="row"><div><label>Registration Link (optional)</label><input id="dLink" value="${val(d.link)}"></div></div>
+        <div class="row">
+          <div><label>Contact Person</label><input id="dContact" value="${val(d.contact || ev.coord)}"></div>
+          <div><label>Contact Phone</label><input id="dPhone" value="${val(d.phone)}"></div>
+        </div>
+        <div class="row"><div><label>Colour Theme</label>
+          <select id="dTheme">${Object.keys(THEMES).map(k =>
+            `<option value="${k}" ${d.theme === k ? "selected" : ""}>${THEMES[k].name}</option>`).join("")}</select></div></div>`;
+    } else {
+      const reqs = d.reqs || DEFAULT_REQS;
+      html += `
+        <div class="row">
+          <div><label>Letter Date</label><input type="date" id="dLetterDate" value="${val(d.letterDate || TODAY)}"></div>
+          <div><label>Expected Participants</label><input type="number" id="dCount" value="${val(d.count || ev.od.length || "")}"></div>
+        </div>
+        <div class="row">
+          <div><label>Coordinator Name *</label><input id="dCoordName" value="${val(d.coordName || ev.coord)}"></div>
+          <div><label>Coordinator Designation *</label><input id="dCoordDesig" value="${val(d.coordDesig)}" placeholder="e.g. Assistant Professor"></div>
+        </div>
+        <div class="row">
+          <div><label>HoD Name</label><input id="dHod" value="${val(d.hod)}" placeholder="e.g. Dr. S. Kumar"></div>
+          <div><label>Principal Name (optional)</label><input id="dPrincipal" value="${val(d.principal)}"></div>
+        </div>
+        <label>Objective of the Event</label>
+        <textarea id="dObjective" rows="3">${val(d.objective || autoObjective(ev))}</textarea>
+        <button class="link" onclick="$('dObjective').value = autoObjective(sourceEvent(docCtx.eventId))">↻ Auto-write again</button>
+        <div class="row" style="margin-top:10px">
+          <div><label>Estimated Budget (₹, optional)</label><input id="dBudget" value="${val(d.budget)}" placeholder="e.g. 5000"></div>
+        </div>
+        <label>Requirements</label>
+        <div id="dReqs">${REQS.map(r => `
+          <label style="font-weight:400;display:flex;gap:6px;align-items:center">
+            <input type="checkbox" style="width:auto" value="${r}" ${reqs.includes(r) ? "checked" : ""}> ${r}</label>`).join("")}
+        </div>
+        <input id="dReqOther" style="margin-top:6px" placeholder="Other requirements (optional)" value="${val(d.reqOther)}">`;
+    }
+
+    html += `<div class="form-actions">
+        <button class="btn-primary" onclick="submitDetails()">✨ Generate ${kind === "flyer" ? "Flyer" : "Letter"}</button>
+        <button class="btn-light" onclick="closeModal()">Cancel</button>
+      </div>`;
+    openModal(html);
+  }
+
+  // Saves the extra details onto the event (or the open form)
+  function updateDetails(patch) {
+    if (docCtx.eventId) {
+      const ev = findEvent(docCtx.eventId);
+      ev.details = Object.assign({}, ev.details, patch);
+      saveAll();
+    } else {
+      temp.details = Object.assign({}, temp.details, patch);
+    }
+  }
+
+  // Marks the flyer / letter as attached to the event
+  function attachDoc(field, label) {
+    if (docCtx.eventId) {
+      findEvent(docCtx.eventId)[field] = label;
+      saveAll();
+    } else {
+      temp[field] = label;
+      $(field === "flyer" ? "flyerName" : "letterName").textContent = "📎 " + label;
+    }
+  }
+
+  // ---------- Step 3: build it ----------
+  function submitDetails() {
+    const v = id => $(id).value.trim();
+    if (docCtx.kind === "flyer") {
+      updateDetails({ highlights: v("dHighlights"), fee: v("dFee"), deadline: v("dDeadline"), link: v("dLink"),
+                      contact: v("dContact"), phone: v("dPhone"), theme: $("dTheme").value });
+      attachDoc("flyer", "Generated flyer");
+    } else {
+      if (!v("dCoordName") || !v("dCoordDesig")) { alert("Please enter the coordinator's name and designation."); return; }
+      updateDetails({
+        letterDate: v("dLetterDate"), count: v("dCount"), coordName: v("dCoordName"), coordDesig: v("dCoordDesig"),
+        hod: v("dHod"), principal: v("dPrincipal"), objective: v("dObjective"), budget: v("dBudget"),
+        reqs: [...document.querySelectorAll("#dReqs input:checked")].map(c => c.value), reqOther: v("dReqOther")
+      });
+      attachDoc("letter", "Generated permission letter");
+    }
+    showDocument();
+  }
+
+  function showDocument() {
+    const ev = sourceEvent(docCtx.eventId);
+    const isFlyer = docCtx.kind === "flyer";
+    openModal(`
+      <div style="overflow:auto"><div id="docPreview" style="display:inline-block">${isFlyer ? flyerHTML(ev) : letterHTML(ev)}</div></div>
+      <div class="form-actions">
+        ${isFlyer ? `
+          <button class="btn-primary" onclick="downloadFlyer()">⬇️ Download Image</button>
+          <button class="btn-primary" onclick="useFlyerAsPoster()">🖼️ Use as Event Poster</button>
+          <button class="btn-light" onclick="nextTheme()">🎨 Change Colours</button>` : ""}
+        <button class="btn-light" onclick="printDoc()">🖨️ Print / Save as PDF</button>
+        <button class="btn-light" onclick="openDetails(docCtx.kind, docCtx.eventId)">✏️ Edit Details</button>
+        <button class="btn-light" onclick="closeModal()">Close</button>
+      </div>`, true);
+  }
+
+  function nextTheme() {
+    const keys = Object.keys(THEMES);
+    const now = (sourceEvent(docCtx.eventId).details || {}).theme || "purple";
+    updateDetails({ theme: keys[(keys.indexOf(now) + 1) % keys.length] });
+    showDocument();
+  }
+
+  // ---------- The flyer design ----------
+  function flyerHTML(ev) {
+    const d = ev.details || {}, t = THEMES[d.theme] || THEMES.purple;
+    const highlights = (d.highlights || autoHighlights(ev)).split("\n").map(x => x.trim()).filter(Boolean);
+    const openTo = ev.type === "FDP" ? "Faculty Members" : ev.batch === "All" ? "All Students" : esc(ev.batch) + " Students";
+
+    const box = (icon, label, value) => `
+      <div style="flex:1;min-width:150px;background:${t.soft};border-radius:10px;padding:10px 12px">
+        <div style="font-size:11px;letter-spacing:1px;color:${t.bg};font-weight:700">${icon} ${label}</div>
+        <div style="font-size:14px;font-weight:600;margin-top:3px">${value}</div>
+      </div>`;
+
+    const guestPic = ev.guestPhoto
+      ? `<img src="${ev.guestPhoto}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid ${t.accent}">`
+      : `<div style="width:72px;height:72px;border-radius:50%;background:${t.bg};color:${t.accent};display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700">${esc(initials(ev.guest || "G"))}</div>`;
+
+    return `
+      <div id="flyerDoc" style="width:600px;background:#fff;font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;border:1px solid #e5e7eb;text-align:left">
+        <div style="padding:18px 24px 12px;text-align:center">
+          <img src="${LOGO_WIDE}" style="height:64px">
+          <div style="font-size:15px;margin-top:8px;font-weight:700;color:${t.bg}">Department of ${esc(ev.orgDept)}</div>
+          ${ev.assoc ? `<div style="font-size:13px;color:#555">in association with <b>${esc(ev.assoc)}</b></div>` : ""}
+        </div>
+
+        <div style="background:${t.bg};color:#fff;padding:26px 24px;text-align:center;border-top:5px solid ${t.accent}">
+          <div style="font-size:12px;opacity:.85;letter-spacing:2px">PROUDLY PRESENTS</div>
+          <div style="display:inline-block;background:${t.accent};color:${t.bg};font-weight:800;padding:5px 18px;border-radius:20px;letter-spacing:2px;font-size:13px;margin-top:10px">${esc(ev.type.toUpperCase())}</div>
+          <div style="font-size:34px;font-weight:800;margin:14px 0 4px;line-height:1.15">${esc(ev.title)}</div>
+          ${ev.desc ? `<div style="font-size:14px;opacity:.9;margin-top:6px">${esc(ev.desc)}</div>` : ""}
+        </div>
+
+        <div style="padding:20px 24px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            ${box("📅", "DATE", dateText(ev))}${box("⏰", "TIME", timeText(ev))}${box("📍", "VENUE", esc(ev.venue))}
+          </div>
+
+          ${highlights.length ? `
+            <div style="margin-top:18px">
+              <div style="font-weight:800;color:${t.bg};margin-bottom:6px;letter-spacing:1px">HIGHLIGHTS</div>
+              ${highlights.map(h => `<div style="padding:3px 0">✅ ${esc(h)}</div>`).join("")}
+            </div>` : ""}
+
+          ${ev.guest ? `
+            <div style="margin-top:18px;display:flex;align-items:center;gap:14px;background:${t.soft};border-radius:12px;padding:12px">
+              <div>${guestPic}</div>
+              <div>
+                <div style="font-size:11px;letter-spacing:1px;color:${t.bg};font-weight:700">RESOURCE PERSON</div>
+                <div style="font-size:17px;font-weight:700">${esc(ev.guest)}</div>
+                <div style="font-size:13px;color:#555">${esc([ev.guestDesig, ev.guestInst].filter(Boolean).join(", "))}</div>
+              </div>
+            </div>` : ""}
+
+          <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+            ${box("🎟️", "REGISTRATION FEE", esc(d.fee || "Free"))}
+            ${d.deadline ? box("⏳", "REGISTER BEFORE", fmtDate(d.deadline)) : ""}
+            ${box("👥", "OPEN TO", openTo)}
+          </div>
+          ${d.link ? `<div style="margin-top:12px;text-align:center;font-size:13px">Register at: <b>${esc(d.link)}</b></div>` : ""}
+        </div>
+
+        <div style="background:${t.bg};color:#fff;padding:12px 24px;font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">
+          <span>📞 ${esc(d.contact || ev.coord || "Event Coordinator")}${d.phone ? " · " + esc(d.phone) : ""}</span>
+          <span>${esc(COLLEGE)}</span>
+        </div>
+      </div>`;
+  }
+
+  // ---------- The permission letter format ----------
+  function letterHTML(ev) {
+    const d = ev.details || {};
+    const kind = typeLabel(ev.type);
+    const cell = "border:1px solid #000;padding:5px 8px;vertical-align:top";
+    const guestLine = ev.guest
+      ? ` The session will be handled by ${esc(ev.guest)}${ev.guestDesig ? ", " + esc(ev.guestDesig) : ""}${ev.guestInst ? ", " + esc(ev.guestInst) : ""}.`
+      : "";
+    const reqs = [...(d.reqs || DEFAULT_REQS), ...(d.reqOther ? [d.reqOther] : [])];
+
+    const rows = [
+      ["Name of the Event", esc(ev.title)],
+      ["Type of Event", esc(kind.charAt(0).toUpperCase() + kind.slice(1))],
+      ["Organized by", "Department of " + esc(ev.orgDept)],
+      ev.assoc ? ["In Association With", esc(ev.assoc)] : null,
+      ["Date", dateText(ev)],
+      ["Time", timeText(ev)],
+      ["Duration", esc(ev.duration)],
+      ["Venue", esc(ev.venue)],
+      ev.guest ? ["Resource Person", esc([ev.guest, ev.guestDesig, ev.guestInst].filter(Boolean).join(", "))] : null,
+      ["Participants", esc(audience(ev)) + (d.count ? ` (approx. ${esc(d.count)})` : "")],
+      d.budget ? ["Estimated Budget", "₹ " + esc(d.budget)] : null
+    ].filter(Boolean);
+
+    return `
+      <div id="letterDoc" style="width:720px;background:#fff;padding:40px 54px;font-family:'Times New Roman',serif;font-size:15px;line-height:1.6;color:#000;text-align:left">
+        <div style="text-align:center;border-bottom:2px solid #5b1a8e;padding-bottom:10px;margin-bottom:18px">
+          <img src="${LOGO_WIDE}" style="height:60px">
+          <div style="font-weight:bold">Department of ${esc(ev.orgDept)}</div>
+        </div>
+
+        <div style="text-align:right">Date: ${fmtDate(d.letterDate || TODAY)}</div>
+
+        <p><b>From</b><br>
+          ${esc(d.coordName)},<br>${esc(d.coordDesig)},<br>Department of ${esc(ev.orgDept)},<br>${esc(COLLEGE)}.</p>
+
+        <p style="margin-top:12px"><b>To</b><br>
+          ${d.principal ? esc(d.principal) + ",<br>" : ""}The Principal,<br>${esc(COLLEGE)}.</p>
+
+        <p style="margin-top:12px"><b>Through</b><br>
+          ${d.hod ? esc(d.hod) + ",<br>" : ""}The Head of the Department,<br>Department of ${esc(ev.orgDept)}.</p>
+
+        <p style="margin-top:12px"><b>Subject:</b> Requesting permission to conduct ${esc(withArticle(kind))} on
+          "${esc(ev.title)}" – reg.</p>
+
+        <p style="margin-top:12px">Respected Sir/Madam,</p>
+
+        <p style="text-indent:40px;text-align:justify">
+          The Department of ${esc(ev.orgDept)}${ev.assoc ? `, in association with ${esc(ev.assoc)},` : ""} proposes to organize
+          ${esc(withArticle(ev.duration.toLowerCase()))} ${esc(kind)} on "${esc(ev.title)}" on ${dateText(ev)},
+          from ${timeText(ev)}, at ${esc(ev.venue)}. The ${esc(kind)} is intended for ${esc(audience(ev))}${d.count ? `, and about ${esc(d.count)} participants are expected` : ""}.${guestLine}</p>
+
+        ${d.objective ? `<p style="text-indent:40px;text-align:justify">${esc(d.objective)}</p>` : ""}
+
+        <p style="margin:10px 0 6px"><b>Event Details:</b></p>
+        <table style="border-collapse:collapse;width:100%;font-size:14px">
+          ${rows.map(r => `<tr><td style="${cell};width:35%"><b>${r[0]}</b></td><td style="${cell}">${r[1]}</td></tr>`).join("")}
+        </table>
+
+        ${reqs.length ? `
+          <p style="margin:12px 0 4px"><b>Facilities Required:</b></p>
+          <ol style="margin-left:28px">${reqs.map(r => `<li>${esc(r)}</li>`).join("")}</ol>` : ""}
+
+        <p style="text-indent:40px;text-align:justify;margin-top:12px">
+          I kindly request you to grant permission to conduct the above ${esc(kind)} and to provide the necessary facilities.</p>
+
+        <p style="margin-top:12px">Thanking you,</p>
+        <p>Yours faithfully,</p>
+
+        <table style="width:100%;margin-top:50px;text-align:center;font-size:14px">
+          <tr style="vertical-align:bottom">
+            <td>(${esc(d.coordName)})<br><b>Event Coordinator</b></td>
+            <td>(${esc(d.hod || "......................")})<br><b>HoD</b><br>Recommended</td>
+            <td>(${esc(d.principal || "......................")})<br><b>Principal</b><br>Approved</td>
+          </tr>
+        </table>
+      </div>`;
+  }
+
+  // ---------- Download / poster / print ----------
+  async function captureFlyer(scale) {
+    if (!window.html2canvas) {
+      alert("Downloading needs an internet connection (it uses the html2canvas library). Use Print / Save as PDF instead.");
+      return null;
+    }
+    return html2canvas($("flyerDoc"), { scale, backgroundColor: "#ffffff", useCORS: true });
+  }
+
+  async function downloadFlyer() {
+    const canvas = await captureFlyer(2);
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = (sourceEvent(docCtx.eventId).title || "event").replace(/[^a-z0-9]+/gi, "_") + "_flyer.png";
+    link.click();
+  }
+
+  async function useFlyerAsPoster() {
+    const canvas = await captureFlyer(1);
+    if (!canvas) return;
+    const image = canvas.toDataURL("image/jpeg", 0.8);
+    if (docCtx.eventId) {
+      findEvent(docCtx.eventId).poster = image;
+      if (saveAll()) alert("Flyer set as the event poster ✅");
+    } else {
+      temp.poster = image;
+      showPreview("posterPreview", image);
+      alert("Flyer set as the poster ✅  Click Save Event to keep it.");
+    }
+  }
+
+  function printDoc() {
+    $("printArea").innerHTML = $("docPreview").innerHTML;
+    window.print();
+  }
+
+  function printReport(id) {
+    $("printArea").innerHTML = reportHTML(findEvent(id));
+    window.print();
+  }
+
+  // ---------- Students page ----------
+  function renderStudents() {
+    // Fill the department filter with every department we have
+    const depts = [...new Set(students.map(s => s.dept).filter(Boolean))].sort();
+    const chosen = $("deptFilter").value || "All";
+    $("deptFilter").innerHTML = ["All", ...depts].map(d =>
+      `<option value="${esc(d)}">${d === "All" ? "All Departments" : esc(d)}</option>`).join("");
+    $("deptFilter").value = depts.includes(chosen) ? chosen : "All";
+
+    const d = $("deptFilter").value, f = $("stuFilter").value;
+    const list = students.filter(s => (d === "All" || s.dept === d) && (f === "All" || s.year === f));
+    $("studentsTable").innerHTML = list.map(s => `
+      <tr>
+        <td>${esc(s.name)}</td><td>${esc(s.roll)}</td><td>${esc(s.dept || "-")}</td>
+        <td>${esc(s.section || "-")}</td><td>${esc(s.year)}</td>
+        <td>${registrations.filter(r => r.roll === s.roll).length}</td>
+        <td><button class="btn-danger" data-roll="${esc(s.roll)}" onclick="removeStudent(this.dataset.roll)">Remove</button></td>
+      </tr>`).join("") || `<tr><td colspan="7">No students.</td></tr>`;
+  }
+
+  function addStudent() {
+    const name = $("newStuName").value.trim(), roll = $("newStuRoll").value.trim();
+    if (!name || !roll) { alert("Enter name and roll number."); return; }
+    if (students.some(s => s.roll === roll)) { alert("That roll number already exists."); return; }
+    students.push({
+      name, roll, year: $("newStuYear").value,
+      dept: $("newStuDept").value.trim().toUpperCase(),
+      section: $("newStuSec").value.trim().toUpperCase()
+    });
+    saveAll();
+    ["newStuName", "newStuRoll", "newStuDept", "newStuSec"].forEach(id => $(id).value = "");
+    renderStudents();
+  }
+
+  function removeStudent(roll) {
+    if (!confirm("Remove this student?")) return;
+    students = students.filter(s => s.roll !== roll);
+    registrations = registrations.filter(r => r.roll !== roll);
+    saveAll();
+    renderStudents();
+  }
+
+  // ---------- Bulk add students ----------
+  // Turns "2", "Year 2", "II", "2nd" into "Year 2"
+  function normalizeYear(text, fallback) {
+    text = (text || "").trim();
+    if (!text) return fallback;
+    const roman = { I: 1, II: 2, III: 3, IV: 4 };
+    const n = parseInt(text.replace(/[^0-9]/g, "")) || roman[text.toUpperCase().replace(/YEAR|\s/g, "")];
+    return n >= 1 && n <= 4 ? "Year " + n : null;
+  }
+
+  // When a CSV file is chosen, put its text into the box
+  $("bulkFile").onchange = function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { $("bulkText").value = reader.result; };
+    reader.readAsText(file);
+  };
+
+  function bulkAddStudents() {
+    const lines = $("bulkText").value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (!lines.length) { alert("Paste some student lines or upload a CSV file first."); return; }
+
+    const fallback = $("bulkYear").value;
+    let added = 0;
+    const skipped = [];
+
+    lines.forEach((line, i) => {
+      // Split by comma (CSV) or tab (pasted from Excel)
+      const [name, roll, deptText, sectionText, yearText] =
+        line.split(/\t|,/).map(p => p.trim().replace(/^"|"$/g, ""));
+
+      // Skip a header row like "Name, Roll No, Department, Section, Year"
+      if (i === 0 && /name/i.test(name) && /roll/i.test(roll || "")) return;
+
+      if (!name || !roll) { skipped.push(`Line ${i + 1}: missing name or roll no.`); return; }
+      const year = normalizeYear(yearText, fallback);
+      if (!year) { skipped.push(`Line ${i + 1}: year "${yearText}" not understood`); return; }
+      if (students.some(s => s.roll === roll)) { skipped.push(`Line ${i + 1}: roll ${roll} already exists`); return; }
+
+      const dept = (deptText || "").toUpperCase(), section = (sectionText || "").toUpperCase();
+      if (!dept || !section) { skipped.push(`Line ${i + 1}: missing department or section`); return; }
+
+      students.push({ name, roll, dept, section, year });
+      added++;
+    });
+
+    if (added) saveAll();
+    renderStudents();
+
+    $("bulkResult").innerHTML =
+      `<span class="badge green">${added} added</span> ` +
+      (skipped.length
+        ? `<span class="badge amber">${skipped.length} skipped</span>
+           <ul style="margin:8px 0 0 18px;color:var(--muted)">${skipped.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`
+        : "");
+    if (added && !skipped.length) $("bulkText").value = "";
+    $("bulkFile").value = "";
+  }
+
+  // Gives the user an example file to fill in Excel
+  function downloadSample() {
+    const csv = "Name,Roll No,Department,Section,Year\n" +
+                "Ravi Kumar,203,CSE,A,2\n" +
+                "Meena S,204,CSE,B,2\n" +
+                "Anand P,305,ECE,A,3\n";
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    link.download = "students_sample.csv";
+    link.click();
+  }
+
+  // ---------- Reports page ----------
+  function renderReports() {
+    $("reportsTable").innerHTML = events.slice().sort(byDate).map(ev => `
+      <tr>
+        <td>${esc(ev.title)}</td><td>${fmtDate(ev.start)}</td><td>${statusBadge(statusOf(ev))}</td>
+        <td>${regsFor(ev.id).length}</td><td>${ev.od.length}</td>
+        <td>${feedback.filter(f => f.eventId === ev.id).length}</td>
+        <td><button class="btn-light" onclick="viewDetails(${ev.id})">View</button>
+            <button class="btn-primary" onclick="printReport(${ev.id})">Generate Report</button></td>
+      </tr>`).join("") || `<tr><td colspan="7">No events yet.</td></tr>`;
+  }
+
+  // ---------- Profile ----------
+  function saveProfile() {
+    user.name = $("profName").value.trim() || user.name;
+    localStorage.setItem("ce_user", JSON.stringify(user));
+    $("facWelcome").textContent = "Welcome, " + user.name;
+    alert("Profile saved!");
+  }
+
+
+  // =====================================================
+  // STUDENT PORTAL
+  // =====================================================
+  function isRegistered(id) {
+    return registrations.some(r => r.eventId === id && r.roll === user.roll);
+  }
+  function eventsForMe() {
+    return events
+      .filter(e => statusOf(e) !== "completed" && (e.batch === "All" || e.batch === user.year))
+      .sort(byDate);
+  }
+
+  function renderStudent() {
+    $("stuWelcome").textContent = `Welcome, ${user.name} (${user.year})`;
+    const list = eventsForMe();
+    $("studentEvents").innerHTML = list.length
+      ? list.map(studentCard).join("")
+      : `<div class="empty">No upcoming events for your batch right now.</div>`;
+
+    const newCount = list.filter(e => !isRegistered(e.id)).length;
+    $("notifCount").textContent = newCount;
+    $("notifCount").classList.toggle("hidden", newCount === 0);
+
+    renderMyEvents();
+    renderOD();
+  }
+
+  function studentCard(ev) {
+    const reg = isRegistered(ev.id);
+    return `
+      <div class="s-event">
+        <div class="inner">
+          <div class="media">${media(ev)}</div>
+          <div>
+            <span class="badge blue">${esc(ev.type)}</span>
+            ${statusOf(ev) === "ongoing" ? '<span class="badge amber">Happening now</span>' : ""}
+            <h3 style="margin:6px 0">${esc(ev.title)}</h3>
+            ${ev.orgDept ? `<p style="color:var(--muted)">Dept. of ${esc(ev.orgDept)}${ev.assoc ? " · in association with " + esc(ev.assoc) : ""}</p>` : ""}
+            <p><b>Date:</b> ${fmtDate(ev.start)} &nbsp; <b>Time:</b> ${fmtTime(ev.startTime)}</p>
+            <p><b>Venue:</b> ${esc(ev.venue)}</p>
+            <p><b>Chief Guest:</b> ${esc(ev.guest || "—")}</p>
+            ${ev.desc ? `<p style="color:var(--muted)">${esc(ev.desc)}</p>` : ""}
+          </div>
+        </div>
+        ${reg
+          ? `<button class="btn-green" disabled>✓ REGISTERED</button>`
+          : `<button class="btn-green" onclick="registerEvent(${ev.id})">REGISTER</button>`}
+      </div>`;
+  }
+
+  function registerEvent(id) {
+    registrations.push({ eventId: id, roll: user.roll });
+    saveAll();
+    renderStudent();
+    alert("Registered successfully! 🎉 Faculty will approve your OD.");
+  }
+
+  function cancelRegistration(id) {
+    if (!confirm("Cancel your registration?")) return;
+    registrations = registrations.filter(r => !(r.eventId === id && r.roll === user.roll));
+    saveAll();
+    renderStudent();
+  }
+
+  function setMyTab(t) { myTab = t; renderMyEvents(); }
+
+  function renderMyEvents() {
+    document.querySelectorAll("[data-mytab]").forEach(s =>
+      s.classList.toggle("active", s.dataset.mytab === myTab));
+
+    const mine = events
+      .filter(e => isRegistered(e.id))
+      .filter(e => myTab === "completed" ? statusOf(e) === "completed" : statusOf(e) !== "completed")
+      .sort(byDate);
+
+    $("myEvents").innerHTML = mine.length ? mine.map(e => {
+      const given = feedback.some(f => f.eventId === e.id && f.roll === user.roll);
+      let extra = "";
+      if (myTab === "registered") {
+        extra = `<button class="btn-light" style="margin-top:6px" onclick="cancelRegistration(${e.id})">Cancel registration</button>`;
+      } else if (e.feedbackOpen) {
+        extra = given
+          ? '<span class="badge green">Feedback submitted</span>'
+          : `<button class="btn-primary" style="margin-top:6px" onclick="giveFeedback(${e.id})">Give Feedback</button>`;
+      }
+      return `
+        <div class="my-item">
+          <b>${esc(e.title)}</b>
+          <p>Date: ${fmtDate(e.start)}</p>
+          <p>Venue: ${esc(e.venue)}</p>
+          <p>Chief Guest: ${esc(e.guest || "—")}</p>
+          ${extra}
+        </div>`;
+    }).join("") : `<p style="color:var(--muted)">Nothing here yet.</p>`;
+  }
+
+  function giveFeedback(id) {
+    const n = parseInt(prompt("Rate this event from 1 to 5:"));
+    if (!(n >= 1 && n <= 5)) { alert("Please enter a number from 1 to 5."); return; }
+    const comment = prompt("Any comments?") || "";
+    feedback.push({ eventId: id, roll: user.roll, rating: n, comment });
+    saveAll();
+    renderMyEvents();
+    alert("Thanks for your feedback!");
+  }
+
+  function renderOD() {
+    const mine = events.filter(e => isRegistered(e.id)).sort(byDate);
+    $("odStatus").innerHTML = mine.length ? mine.map(e => {
+      const ok = e.od.includes(user.roll);
+      return `<div class="od"><span class="dot ${ok ? "ok" : ""}"></span>
+              <span>${esc(e.title)} — <b>${ok ? "OD Approved" : "OD Pending"}</b></span></div>`;
+    }).join("") : `<p style="color:var(--muted)">Register for an event to see OD status.</p>`;
+  }
+
+  function showNotifications() {
+    const fresh = eventsForMe().filter(e => !isRegistered(e.id));
+    alert(fresh.length
+      ? "New events for you:\n\n" + fresh.map(e => "• " + e.title + " — " + fmtDate(e.start)).join("\n")
+      : "No new notifications.");
+  }
+
+
+  // ---------- Start the app when the page loads ----------
+  startApp();
+</script>
+
+</body>
+</html>
